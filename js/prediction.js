@@ -19,10 +19,39 @@ const Prediction = {
             return;
         }
 
-        Utils.showToast('正在从 API 加载数据...', 'info');
-        // API loading logic would go here
-        // For now, show a message
-        Utils.showToast('API 数据加载功能开发中', 'warning');
+        const homeTeamName = document.getElementById('homeTeamName').value.trim();
+        const awayTeamName = document.getElementById('awayTeamName').value.trim();
+
+        if (!homeTeamName && !awayTeamName) {
+            Utils.showToast('请先输入至少一个球队名称', 'warning');
+            return;
+        }
+
+        Utils.showToast('正在从 API 搜索球队数据...', 'info');
+
+        try {
+            // Search for home team
+            if (homeTeamName) {
+                const homeResult = await ApiConfig.searchPlayers(homeTeamName);
+                if (homeResult && homeResult.response && homeResult.response.suggestions) {
+                    const players = homeResult.response.suggestions.filter(s => s.type === 'player');
+                    if (players.length > 0) {
+                        // Show that we found data (but we need team stats, not player search)
+                        Utils.showToast(`找到 ${players.length} 个相关球员，正在获取球队数据...`, 'info');
+                    }
+                }
+            }
+
+            // Note: This API is for player search, not team stats
+            // For full team stats, a different endpoint would be needed
+            Utils.showToast('提示：当前 API 支持球员搜索，球队统计数据请手动输入', 'warning');
+
+            // Enable the button
+            document.getElementById('loadTeamData').disabled = false;
+        } catch (error) {
+            console.error('API error:', error);
+            Utils.showToast('API 请求失败：' + error.message, 'error');
+        }
     },
 
     calculate() {

@@ -27,7 +27,23 @@ const App = {
         // Update dashboard
         this.updateDashboard();
 
+        // Check API status and update UI
+        this.checkApiStatus();
+
         console.log('Football Hedge Tool initialized');
+    },
+
+    checkApiStatus() {
+        const config = Store.getApiConfig();
+        const loadBtn = document.getElementById('loadTeamData');
+
+        if (config.connected) {
+            loadBtn.disabled = false;
+            loadBtn.title = '从 API 加载球队数据';
+        } else {
+            loadBtn.disabled = true;
+            loadBtn.title = '请先配置并连接 API';
+        }
     },
 
     setupNavigation() {

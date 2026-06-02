@@ -744,6 +744,7 @@
                     <div class="form-group">
                         <label>数据源类型</label>
                         <select id="apiType">
+                            <option value="rapidapi">RapidAPI (推荐)</option>
                             <option value="custom">自定义 API</option>
                             <option value="football-data">football-data.org</option>
                             <option value="other">其他</option>
@@ -781,12 +782,14 @@
 
             <div class="info-card">
                 <h4><i class="fas fa-info-circle"></i> 关于数据源</h4>
-                <p>本工具支持接入任何符合 RESTful 规范的足球数据 API。以下是推荐的免费数据源：</p>
+                <p>本工具支持接入任何符合 RESTful 规范的足球数据 API。以下是推荐的数据源：</p>
                 <ul>
+                    <li><strong>RapidAPI</strong> ⭐ — 推荐！免费额度充足，数据全面（球员、球队、比赛等）</li>
                     <li><strong>football-data.org</strong> — 免费足球数据 API，包含各大联赛数据</li>
                     <li><strong>api-football.com</strong> — 功能丰富的足球 API（有免费额度）</li>
                     <li><strong>openfootball</strong> — 开源足球数据</li>
                 </ul>
+                <p><strong>提示：</strong>使用 RapidAPI 时，请先在 <a href="https://rapidapi.com/" target="_blank" style="color: var(--accent-primary);">rapidapi.com</a> 注册并获取 API Key。</p>
                 <p>配置 API 后，智能预测、球队查询等功能将自动获取真实数据。</p>
             </div>
         </section>

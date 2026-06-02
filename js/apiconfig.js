@@ -1,6 +1,12 @@
 // ===== API Configuration =====
 
 const ApiConfig = {
+    // RapidAPI default config
+    RAPIDAPI_DEFAULTS: {
+        host: 'free-api-live-football-data.p.rapidapi.com',
+        baseUrl: 'https://free-api-live-football-data.p.rapidapi.com'
+    },
+
     init() {
         this.bindEvents();
         this.loadConfig();
@@ -15,15 +21,29 @@ const ApiConfig = {
 
         // Save config
         document.getElementById('saveApiConfig').addEventListener('click', () => this.saveConfig());
+
+        // API type change
+        document.getElementById('apiType').addEventListener('change', (e) => this.onTypeChange(e.target.value));
+    },
+
+    onTypeChange(type) {
+        if (type === 'rapidapi') {
+            document.getElementById('apiBaseUrl').value = this.RAPIDAPI_DEFAULTS.baseUrl;
+            document.getElementById('apiHeaders').value = JSON.stringify({
+                'x-rapidapi-host': this.RAPIDAPI_DEFAULTS.host
+            }, null, 2);
+        }
     },
 
     loadConfig() {
         const config = Store.getApiConfig();
 
-        document.getElementById('apiType').value = config.type || 'custom';
-        document.getElementById('apiBaseUrl').value = config.baseUrl || '';
+        document.getElementById('apiType').value = config.type || 'rapidapi';
+        document.getElementById('apiBaseUrl').value = config.baseUrl || this.RAPIDAPI_DEFAULTS.baseUrl;
         document.getElementById('apiKey').value = config.apiKey || '';
-        document.getElementById('apiHeaders').value = config.headers ? JSON.stringify(config.headers, null, 2) : '';
+        document.getElementById('apiHeaders').value = config.headers
+            ? JSON.stringify(config.headers, null, 2)
+            : JSON.stringify({ 'x-rapidapi-host': this.RAPIDAPI_DEFAULTS.host }, null, 2);
 
         this.updateStatus(config);
     },
@@ -45,6 +65,12 @@ const ApiConfig = {
             }
         }
 
+        // For RapidAPI, ensure the host header is set
+        if (type === 'rapidapi') {
+            headers['x-rapidapi-host'] = this.RAPIDAPI_DEFAULTS.host;
+            headers['x-rapidapi-key'] = apiKey;
+        }
+
         Store.updateApiConfig({
             type,
             baseUrl,
@@ -59,11 +85,17 @@ const ApiConfig = {
     },
 
     async testConnection() {
+        const type = document.getElementById('apiType').value;
         const baseUrl = document.getElementById('apiBaseUrl').value.trim();
         const apiKey = document.getElementById('apiKey').value.trim();
 
         if (!baseUrl) {
             Utils.showToast('请输入 API 基础地址', 'error');
+            return;
+        }
+
+        if (type === 'rapidapi' && !apiKey) {
+            Utils.showToast('请输入 RapidAPI Key', 'error');
             return;
         }
 
@@ -76,16 +108,10 @@ const ApiConfig = {
         statusBody.className = 'api-status-body';
 
         try {
-            // Try to fetch from the API
-            const testUrl = baseUrl.endsWith('/') ? baseUrl : baseUrl + '/';
+            // Build headers
             const headers = {
                 'Content-Type': 'application/json'
             };
-
-            if (apiKey) {
-                headers['X-Auth-Token'] = apiKey;
-                headers['Authorization'] = `Bearer ${apiKey}`;
-            }
 
             // Add custom headers
             const customHeadersStr = document.getElementById('apiHeaders').value.trim();
@@ -98,16 +124,32 @@ const ApiConfig = {
                 }
             }
 
+            // For RapidAPI
+            if (type === 'rapidapi') {
+                headers['x-rapidapi-host'] = this.RAPIDAPI_DEFAULTS.host;
+                headers['x-rapidapi-key'] = apiKey;
+            }
+
+            // Test with a simple endpoint
+            const testUrl = type === 'rapidapi'
+                ? `${baseUrl}/football-players-search?search=test`
+                : baseUrl;
+
             const response = await fetch(testUrl, {
                 method: 'GET',
                 headers,
-                mode: 'cors',
-                timeout: 10000
+                mode: 'cors'
             });
 
             if (response.ok) {
-                // Success
+                const data = await response.json();
+
+                // Save connected state
                 Store.updateApiConfig({
+                    type,
+                    baseUrl,
+                    apiKey,
+                    headers,
                     connected: true,
                     lastChecked: new Date().toISOString()
                 });
@@ -137,7 +179,7 @@ const ApiConfig = {
 
             // Check if it's a CORS error
             if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-                Utils.showToast('连接失败：可能是 CORS 限制或网络问题', 'error');
+                Utils.showToast('连接失败：浏览器 CORS 限制，请使用后端代理或 CORS 扩展', 'error');
             } else {
                 Utils.showToast(`连接失败：${error.message}`, 'error');
             }
@@ -199,30 +241,33 @@ const ApiConfig = {
     },
 
     // Make API request
-    async makeRequest(endpoint, options = {}) {
+    async makeRequest(endpoint, params = {}) {
         const config = Store.getApiConfig();
 
         if (!config.connected || !config.baseUrl) {
             throw new Error('API 未连接');
         }
 
-        const url = config.baseUrl.endsWith('/')
-            ? config.baseUrl + endpoint
-            : config.baseUrl + '/' + endpoint;
+        // Build URL with params
+        const url = new URL(config.baseUrl + '/' + endpoint);
+        Object.entries(params).forEach(([key, value]) => {
+            url.searchParams.append(key, value);
+        });
 
         const headers = {
             'Content-Type': 'application/json',
             ...config.headers
         };
 
-        if (config.apiKey) {
-            headers['X-Auth-Token'] = config.apiKey;
-            headers['Authorization'] = `Bearer ${config.apiKey}`;
+        // For RapidAPI
+        if (config.type === 'rapidapi') {
+            headers['x-rapidapi-host'] = this.RAPIDAPI_DEFAULTS.host;
+            headers['x-rapidapi-key'] = config.apiKey;
         }
 
-        const response = await fetch(url, {
-            ...options,
-            headers: { ...headers, ...options.headers }
+        const response = await fetch(url.toString(), {
+            method: 'GET',
+            headers
         });
 
         if (!response.ok) {
@@ -230,6 +275,22 @@ const ApiConfig = {
         }
 
         return response.json();
+    },
+
+    // Search players
+    async searchPlayers(query) {
+        return this.makeRequest('football-players-search', { search: query });
+    },
+
+    // Get team info (if available)
+    async getTeamInfo(teamId) {
+        // This endpoint may vary based on the API
+        try {
+            return await this.makeRequest('teams', { id: teamId });
+        } catch (e) {
+            console.warn('Team info endpoint not available:', e);
+            return null;
+        }
     },
 
     // Check if API is connected
