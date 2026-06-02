@@ -95,34 +95,31 @@ const ApiConfig = {
             'x-rapidapi-key': defaultApiKey
         };
 
+        // 检测是否在 Vercel 环境
+        const hostname = window.location.hostname;
+        const isVercel = hostname.includes('vercel.app');
+
+        // 如果是 Vercel 环境或没有配置，自动设置默认配置
+        if (!config.type || isVercel) {
+            const newConfig = {
+                type: 'rapidapi',
+                baseUrl: this.RAPIDAPI_DEFAULTS.baseUrl,
+                apiKey: config.apiKey || defaultApiKey,
+                headers: config.headers || defaultHeaders,
+                connected: true,
+                lastChecked: new Date().toISOString()
+            };
+            Store.updateApiConfig(newConfig);
+            // 更新 config 变量
+            Object.assign(config, newConfig);
+        }
+
         document.getElementById('apiType').value = config.type || 'rapidapi';
         document.getElementById('apiBaseUrl').value = config.baseUrl || this.RAPIDAPI_DEFAULTS.baseUrl;
         document.getElementById('apiKey').value = config.apiKey || defaultApiKey;
         document.getElementById('apiHeaders').value = config.headers
             ? JSON.stringify(config.headers, null, 2)
             : JSON.stringify(defaultHeaders, null, 2);
-
-        // If no config saved yet, auto-save with defaults
-        if (!config.type) {
-            Store.updateApiConfig({
-                type: 'rapidapi',
-                baseUrl: this.RAPIDAPI_DEFAULTS.baseUrl,
-                apiKey: defaultApiKey,
-                headers: defaultHeaders,
-                connected: true,
-                lastChecked: new Date().toISOString()
-            });
-        }
-
-        // 如果是 Vercel 环境，自动标记为已连接
-        const hostname = window.location.hostname;
-        if (hostname.includes('vercel.app')) {
-            Store.updateApiConfig({
-                ...config,
-                connected: true,
-                lastChecked: new Date().toISOString()
-            });
-        }
 
         this.updateStatus(config);
     },
