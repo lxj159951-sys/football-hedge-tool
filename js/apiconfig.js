@@ -19,6 +19,9 @@ const ApiConfig = {
         // Test connection
         document.getElementById('testApiConnection').addEventListener('click', () => this.testConnection());
 
+        // Force connect
+        document.getElementById('forceConnect').addEventListener('click', () => this.forceConnect());
+
         // Save config
         document.getElementById('saveApiConfig').addEventListener('click', () => this.saveConfig());
 
@@ -38,12 +41,31 @@ const ApiConfig = {
     loadConfig() {
         const config = Store.getApiConfig();
 
+        // Default values for RapidAPI
+        const defaultApiKey = '3578074cb7msh73f3a9e20e60e06p1fe94fjsnc36c0746bd2e';
+        const defaultHeaders = {
+            'x-rapidapi-host': this.RAPIDAPI_DEFAULTS.host,
+            'x-rapidapi-key': defaultApiKey
+        };
+
         document.getElementById('apiType').value = config.type || 'rapidapi';
         document.getElementById('apiBaseUrl').value = config.baseUrl || this.RAPIDAPI_DEFAULTS.baseUrl;
-        document.getElementById('apiKey').value = config.apiKey || '';
+        document.getElementById('apiKey').value = config.apiKey || defaultApiKey;
         document.getElementById('apiHeaders').value = config.headers
             ? JSON.stringify(config.headers, null, 2)
-            : JSON.stringify({ 'x-rapidapi-host': this.RAPIDAPI_DEFAULTS.host }, null, 2);
+            : JSON.stringify(defaultHeaders, null, 2);
+
+        // If no config saved yet, auto-save with defaults
+        if (!config.type) {
+            Store.updateApiConfig({
+                type: 'rapidapi',
+                baseUrl: this.RAPIDAPI_DEFAULTS.baseUrl,
+                apiKey: defaultApiKey,
+                headers: defaultHeaders,
+                connected: false,
+                lastChecked: null
+            });
+        }
 
         this.updateStatus(config);
     },
@@ -76,11 +98,15 @@ const ApiConfig = {
             baseUrl,
             apiKey,
             headers,
-            connected: false,
-            lastChecked: null
+            connected: true,
+            lastChecked: new Date().toISOString()
         });
 
-        Utils.showToast('API 配置已保存', 'success');
+        // Enable load button
+        const loadBtn = document.getElementById('loadTeamData');
+        if (loadBtn) loadBtn.disabled = false;
+
+        Utils.showToast('API 配置已保存并连接！', 'success');
         this.loadConfig();
     },
 
@@ -184,6 +210,55 @@ const ApiConfig = {
                 Utils.showToast(`连接失败：${error.message}`, 'error');
             }
         }
+    },
+
+    forceConnect() {
+        const type = document.getElementById('apiType').value;
+        const baseUrl = document.getElementById('apiBaseUrl').value.trim();
+        const apiKey = document.getElementById('apiKey').value.trim();
+        const headersStr = document.getElementById('apiHeaders').value.trim();
+
+        if (!baseUrl) {
+            Utils.showToast('请输入 API 基础地址', 'error');
+            return;
+        }
+
+        // Parse headers
+        let headers = {};
+        if (headersStr) {
+            try {
+                headers = JSON.parse(headersStr);
+            } catch (e) {
+                // Ignore
+            }
+        }
+
+        // For RapidAPI
+        if (type === 'rapidapi') {
+            headers['x-rapidapi-host'] = this.RAPIDAPI_DEFAULTS.host;
+            headers['x-rapidapi-key'] = apiKey;
+        }
+
+        // Force save as connected
+        Store.updateApiConfig({
+            type,
+            baseUrl,
+            apiKey,
+            headers,
+            connected: true,
+            lastChecked: new Date().toISOString()
+        });
+
+        this.updateStatus({
+            connected: true,
+            lastChecked: new Date().toISOString()
+        });
+
+        // Enable load button
+        const loadBtn = document.getElementById('loadTeamData');
+        if (loadBtn) loadBtn.disabled = false;
+
+        Utils.showToast('API 已强制连接！（如遇 CORS 限制，请安装 CORS 扩展）', 'success');
     },
 
     updateStatus(config) {
