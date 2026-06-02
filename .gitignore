@@ -1,1 +1,7 @@
 .vercel
+
+# API 配置文件（包含敏感信息）
+js/config.js
+
+# Node modules
+node_modules/

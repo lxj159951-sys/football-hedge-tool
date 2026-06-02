@@ -30,11 +30,10 @@ module.exports = async (req, res) => {
         apiUrl.searchParams.append(key, value);
     });
 
-    // API 配置
-    const apiKey = req.headers['x-rapidapi-key'] || '3578074cb7msh73f3a9e20e60e06p1fe94fjsnc36c0746bd2e';
+    // API 配置 - 优先使用请求头中的 Key，否则使用环境变量
+    const apiKey = req.headers['x-rapidapi-key'] || process.env.RAPIDAPI_KEY || '';
 
     console.log(`[Proxy] Requesting: ${apiUrl.toString()}`);
-    console.log(`[Proxy] API Key: ${apiKey.substring(0, 10)}...`);
 
     try {
         // 发起请求

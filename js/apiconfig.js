@@ -3,8 +3,8 @@
 const ApiConfig = {
     // RapidAPI default config - 使用 footapi7（功能更全）
     RAPIDAPI_DEFAULTS: {
-        host: 'footapi7.p.rapidapi.com',
-        baseUrl: 'https://footapi7.p.rapidapi.com'
+        host: API_CONFIG.RAPIDAPI_HOST,
+        baseUrl: `https://${API_CONFIG.RAPIDAPI_HOST}`
     },
 
     // Proxy config (解决 CORS 问题)
@@ -89,7 +89,7 @@ const ApiConfig = {
         const config = Store.getApiConfig();
 
         // Default values for RapidAPI
-        const defaultApiKey = '3578074cb7msh73f3a9e20e60e06p1fe94fjsnc36c0746bd2e';
+        const defaultApiKey = API_CONFIG.RAPIDAPI_KEY;
         const defaultHeaders = {
             'x-rapidapi-host': this.RAPIDAPI_DEFAULTS.host,
             'x-rapidapi-key': defaultApiKey

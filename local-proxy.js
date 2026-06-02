@@ -6,7 +6,24 @@ const https = require('https');
 
 const PORT = 3001;
 const API_HOST = 'footapi7.p.rapidapi.com';
-const API_KEY = '3578074cb7msh73f3a9e20e60e06p1fe94fjsnc36c0746bd2e';
+
+// 尝试从环境变量或配置文件读取 API Key
+let API_KEY = process.env.RAPIDAPI_KEY || '';
+try {
+    // 尝试读取 config.js（如果存在）
+    const fs = require('fs');
+    const configContent = fs.readFileSync('./js/config.js', 'utf8');
+    const match = configContent.match(/RAPIDAPI_KEY:\s*['"]([^'"]+)['"]/);
+    if (match) {
+        API_KEY = match[1];
+    }
+} catch (e) {
+    // config.js 不存在，使用环境变量
+}
+
+if (!API_KEY) {
+    console.warn('Warning: No API Key found. Please set RAPIDAPI_KEY environment variable or create js/config.js');
+}
 
 const server = http.createServer((req, res) => {
     // 设置 CORS 头
@@ -59,8 +76,6 @@ const server = http.createServer((req, res) => {
         }
     };
 
-    console.log(`[Proxy] Options:`, JSON.stringify(options, null, 2));
-
     const proxyReq = https.request(options, (proxyRes) => {
         let data = '';
 
@@ -96,11 +111,7 @@ server.listen(PORT, () => {
 ║   地址: http://localhost:${PORT}                            ║
 ║                                                           ║
 ║   使用方法:                                               ║
-║   http://localhost:${PORT}?endpoint=football-players-search&search=test
-║                                                           ║
-║   在浏览器控制台测试:                                     ║
-║   fetch('http://localhost:${PORT}?endpoint=football-players-search&search=m')
-║     .then(r => r.json()).then(console.log)                ║
+║   http://localhost:${PORT}?endpoint=matches/live            ║
 ║                                                           ║
 ╚═══════════════════════════════════════════════════════════╝
     `);
