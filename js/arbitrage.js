@@ -3,9 +3,51 @@
 const Arbitrage = {
     platformCount: 3, // 默认 3 个平台
 
+    // 预设选项类型
+    outcomeTypes: {
+        'win-draw-lose': {
+            name: '胜平负',
+            outcomes: ['主胜', '平局', '客胜']
+        },
+        'over-under': {
+            name: '大小球',
+            outcomes: ['大球', '小球']
+        },
+        'over-under-25': {
+            name: '大小球 2.5',
+            outcomes: ['大 2.5', '小 2.5']
+        },
+        'over-under-15': {
+            name: '大小球 1.5',
+            outcomes: ['大 1.5', '小 1.5']
+        },
+        'over-under-35': {
+            name: '大小球 3.5',
+            outcomes: ['大 3.5', '小 3.5']
+        },
+        'handicap': {
+            name: '让球盘',
+            outcomes: ['主队让球', '客队让球']
+        },
+        'btts': {
+            name: '双方进球',
+            outcomes: ['是', '否']
+        },
+        'double-chance': {
+            name: '双重机会',
+            outcomes: ['主胜或平', '客胜或平', '主胜或客胜']
+        },
+        'custom': {
+            name: '自定义',
+            outcomes: []
+        }
+    },
+
     init() {
         this.bindEvents();
         this.setupPlatformSelector();
+        this.setupOutcomeTypeSelector();
+        this.loadDefaultOutcomes();
     },
 
     bindEvents() {
@@ -21,20 +63,9 @@ const Arbitrage = {
                 this.removeOutcome(e.target.closest('.outcome-row'));
             }
         });
-
-        // Add platform
-        document.getElementById('addPlatform')?.addEventListener('click', () => this.addPlatform());
-
-        // Remove platform (delegated)
-        document.getElementById('outcomesList')?.addEventListener('click', (e) => {
-            if (e.target.closest('.btn-remove-platform')) {
-                this.removePlatform(e.target.closest('.btn-remove-platform').dataset.platform);
-            }
-        });
     },
 
     setupPlatformSelector() {
-        // 初始化平台数量选择器
         const selector = document.getElementById('platformCount');
         if (selector) {
             selector.value = this.platformCount;
@@ -45,13 +76,56 @@ const Arbitrage = {
         }
     },
 
+    setupOutcomeTypeSelector() {
+        const selector = document.getElementById('outcomeType');
+        if (!selector) return;
+
+        // 填充选项类型
+        Object.entries(this.outcomeTypes).forEach(([key, value]) => {
+            const option = document.createElement('option');
+            option.value = key;
+            option.textContent = value.name;
+            selector.appendChild(option);
+        });
+
+        selector.value = 'win-draw-lose';
+
+        selector.addEventListener('change', (e) => {
+            this.loadOutcomesByType(e.target.value);
+        });
+    },
+
+    loadDefaultOutcomes() {
+        this.loadOutcomesByType('win-draw-lose');
+    },
+
+    loadOutcomesByType(type) {
+        const list = document.getElementById('outcomesList');
+        list.innerHTML = '';
+
+        const typeConfig = this.outcomeTypes[type];
+        if (!typeConfig) return;
+
+        if (type === 'custom') {
+            // 自定义模式：添加空行
+            this.addOutcome();
+            this.addOutcome();
+        } else {
+            // 预设模式：添加预定义选项
+            typeConfig.outcomes.forEach(name => {
+                this.addOutcomeWithData(name, []);
+            });
+        }
+    },
+
     rebuildOutcomeRows() {
         const list = document.getElementById('outcomesList');
         const existingOutcomes = [];
 
         // 保存现有数据
         list.querySelectorAll('.outcome-row').forEach(row => {
-            const name = row.querySelector('.outcome-name')?.value || '';
+            const name = row.querySelector('.outcome-name-select')?.value ||
+                         row.querySelector('.outcome-name')?.value || '';
             const odds = [];
             row.querySelectorAll('.outcome-odds-input').forEach(input => {
                 odds.push(input.value);
@@ -63,16 +137,9 @@ const Arbitrage = {
         list.innerHTML = '';
 
         // 重新创建行
-        if (existingOutcomes.length > 0) {
-            existingOutcomes.forEach((outcome, index) => {
-                this.addOutcomeWithData(outcome.name, outcome.odds);
-            });
-        } else {
-            // 默认 3 个选项
-            this.addOutcomeWithData('主胜', []);
-            this.addOutcomeWithData('平局', []);
-            this.addOutcomeWithData('客胜', []);
-        }
+        existingOutcomes.forEach(outcome => {
+            this.addOutcomeWithData(outcome.name, outcome.odds);
+        });
     },
 
     addOutcome() {
@@ -84,7 +151,7 @@ const Arbitrage = {
             return;
         }
 
-        this.addOutcomeWithData(`选项 ${count + 1}`, []);
+        this.addOutcomeWithData('', []);
     },
 
     addOutcomeWithData(name, oddsValues) {
@@ -100,17 +167,39 @@ const Arbitrage = {
             const value = oddsValues[i] || '';
             platformInputs += `
                 <div class="form-group">
-                    <label>平台 ${i + 1} 赔率</label>
-                    <input type="number" class="outcome-odds-input" data-platform="${i}" step="0.01" min="1" placeholder="2.00" value="${value}">
+                    <label>平台 ${i + 1}</label>
+                    <input type="number" class="outcome-odds-input" data-platform="${i}" step="0.01" min="1" placeholder="赔率" value="${value}">
+                </div>
+            `;
+        }
+
+        // 获取当前选中的类型
+        const currentType = document.getElementById('outcomeType')?.value || 'custom';
+        const typeConfig = this.outcomeTypes[currentType];
+
+        // 如果是预设类型，使用下拉选择；否则使用输入框
+        let nameInput = '';
+        if (currentType !== 'custom' && typeConfig && typeConfig.outcomes.length > 0) {
+            const options = typeConfig.outcomes.map(outcome =>
+                `<option value="${outcome}" ${outcome === name ? 'selected' : ''}>${outcome}</option>`
+            ).join('');
+            nameInput = `
+                <div class="form-group">
+                    <label>选项</label>
+                    <select class="outcome-name-select">${options}</select>
+                </div>
+            `;
+        } else {
+            nameInput = `
+                <div class="form-group">
+                    <label>选项名称</label>
+                    <input type="text" class="outcome-name" value="${name}" placeholder="如：主胜">
                 </div>
             `;
         }
 
         row.innerHTML = `
-            <div class="form-group">
-                <label>选项名称</label>
-                <input type="text" class="outcome-name" value="${name}" placeholder="如：主胜">
-            </div>
+            ${nameInput}
             ${platformInputs}
             <button class="btn-icon btn-remove" title="删除">
                 <i class="fas fa-times"></i>
@@ -129,32 +218,16 @@ const Arbitrage = {
         row.remove();
     },
 
-    addPlatform() {
-        if (this.platformCount >= 6) {
-            Utils.showToast('最多支持 6 个平台', 'warning');
-            return;
-        }
-        this.platformCount++;
-        document.getElementById('platformCount').value = this.platformCount;
-        this.rebuildOutcomeRows();
-    },
-
-    removePlatform(platformIndex) {
-        if (this.platformCount <= 2) {
-            Utils.showToast('至少需要 2 个平台', 'warning');
-            return;
-        }
-        this.platformCount--;
-        document.getElementById('platformCount').value = this.platformCount;
-        this.rebuildOutcomeRows();
-    },
-
     getOutcomes() {
         const rows = document.querySelectorAll('.outcome-row');
         const outcomes = [];
 
         rows.forEach(row => {
-            const name = row.querySelector('.outcome-name').value || '未知';
+            // 获取选项名称（优先使用下拉选择框）
+            const nameSelect = row.querySelector('.outcome-name-select');
+            const nameInput = row.querySelector('.outcome-name');
+            const name = nameSelect?.value || nameInput?.value || '未知';
+
             const oddsInputs = row.querySelectorAll('.outcome-odds-input');
             const odds = [];
 
@@ -166,7 +239,6 @@ const Arbitrage = {
             });
 
             if (odds.length > 0) {
-                // 使用最高赔率进行套利计算
                 const bestOdds = Math.max(...odds);
                 outcomes.push({
                     name,
