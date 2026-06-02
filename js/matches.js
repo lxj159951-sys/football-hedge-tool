@@ -67,92 +67,30 @@ const Matches = {
         }
     },
 
-    displayLiveMatches(events, container) {
-        // 按联赛分组
-        const groupedByTournament = {};
-        events.forEach(event => {
-            const tournamentName = event.tournament?.name || '其他联赛';
-            if (!groupedByTournament[tournamentName]) {
-                groupedByTournament[tournamentName] = {
-                    info: event.tournament,
-                    matches: []
-                };
-            }
-            groupedByTournament[tournamentName].matches.push(event);
-        });
+    // 简化联赛名称
+    shortenTournamentName(name) {
+        if (!name) return '未知联赛';
 
-        const tournaments = Object.entries(groupedByTournament).slice(0, 5); // 只显示前5个联赛
+        // 移除常见的前缀和后缀
+        let shortName = name
+            .replace(/^Camp\.\s*/i, '')
+            .replace(/^De\s*/i, '')
+            .replace(/^Reser\s*/i, '')
+            .replace(/\s*De\s*/gi, ' ')
+            .replace(/\s*Metropolitana/i, '')
+            .replace(/\s*Reserves?/i, '')
+            .replace(/\s*Reserve/i, '')
+            .trim();
 
-        container.innerHTML = `
-            <div class="matches-header">
-                <h3><i class="fas fa-futbol"></i> 实时比赛</h3>
-                <span class="badge online">LIVE</span>
-            </div>
+        // 如果还是太长，截取前20个字符
+        if (shortName.length > 25) {
+            shortName = shortName.substring(0, 22) + '...';
+        }
 
-            <div class="matches-list">
-                ${tournaments.map(([name, data]) => `
-                    <div class="tournament-group">
-                        <div class="tournament-header">
-                            <span class="tournament-flag">${this.getCountryFlag(data.info?.category?.slug)}</span>
-                            <span class="tournament-name">${name}</span>
-                            <span class="match-count">${data.matches.length} 场</span>
-                        </div>
-                        ${data.matches.slice(0, 3).map(match => this.renderMatchCard(match)).join('')}
-                    </div>
-                `).join('')}
-            </div>
-        `;
+        return shortName || '其他联赛';
     },
 
-    renderMatchCard(match) {
-        const homeTeam = match.homeTeam || {};
-        const awayTeam = match.awayTeam || {};
-        const status = match.status || {};
-        const homeScore = match.homeScore?.current || '-';
-        const awayScore = match.awayScore?.current || '-';
-        const minute = status.description || '';
-
-        const isLive = status.type === 'inprogress';
-        const isFinished = status.type === 'finished';
-
-        return `
-            <div class="match-card ${isLive ? 'live' : ''} ${isFinished ? 'finished' : ''}">
-                <div class="match-content">
-                    <div class="match-teams">
-                        <div class="team home">
-                            <span class="team-name">${homeTeam.name || '主队'}</span>
-                            <span class="team-code">${homeTeam.nameCode || ''}</span>
-                        </div>
-                        <div class="match-score">
-                            <span class="score">${homeScore}</span>
-                            <span class="score-divider">-</span>
-                            <span class="score">${awayScore}</span>
-                        </div>
-                        <div class="team away">
-                            <span class="team-code">${awayTeam.nameCode || ''}</span>
-                            <span class="team-name">${awayTeam.name || '客队'}</span>
-                        </div>
-                    </div>
-                    <div class="match-status">
-                        ${isLive ? `<span class="live-badge"><span class="pulse"></span> ${minute}</span>` : ''}
-                        ${isFinished ? '<span class="finished-badge">完场</span>' : ''}
-                    </div>
-                </div>
-                <div class="match-actions">
-                    <button class="btn btn-sm" onclick="Matches.viewMatchDetail(${match.id})">
-                        <i class="fas fa-chart-bar"></i> 详情
-                    </button>
-                    <button class="btn btn-sm" onclick="Matches.analyzeMatch('${homeTeam.name}', '${awayTeam.name}')">
-                        <i class="fas fa-brain"></i> 分析
-                    </button>
-                    <button class="btn btn-sm" onclick="Matches.addToRecords('${homeTeam.name} vs ${awayTeam.name}')">
-                        <i class="fas fa-plus"></i> 记录
-                    </button>
-                </div>
-            </div>
-        `;
-    },
-
+    // 获取国家旗帜
     getCountryFlag(slug) {
         const flags = {
             'argentina': '🇦🇷',
@@ -164,9 +102,159 @@ const Matches = {
             'italy': '🇮🇹',
             'china': '🇨🇳',
             'japan': '🇯🇵',
-            'usa': '🇺🇸'
+            'usa': '🇺🇸',
+            'mexico': '🇲🇽',
+            'colombia': '🇨🇴',
+            'chile': '🇨🇱',
+            'peru': '🇵🇪',
+            'ecuador': '🇪🇨',
+            'uruguay': '🇺🇾',
+            'paraguay': '🇵🇾',
+            'bolivia': '🇧🇴',
+            'venezuela': '🇻🇪'
         };
         return flags[slug] || '⚽';
+    },
+
+    // 获取状态显示
+    getStatusDisplay(status) {
+        if (!status) return { text: '', class: '' };
+
+        const type = status.type;
+        const desc = status.description || '';
+
+        if (type === 'inprogress') {
+            return { text: desc || '进行中', class: 'live' };
+        } else if (type === 'finished') {
+            return { text: '完场', class: 'finished' };
+        } else if (type === 'notstarted') {
+            return { text: '未开始', class: 'upcoming' };
+        } else {
+            return { text: desc || type, class: '' };
+        }
+    },
+
+    displayLiveMatches(events, container) {
+        // 只显示足球比赛
+        const footballEvents = events.filter(e =>
+            e.tournament?.category?.sport?.slug === 'football' ||
+            e.tournament?.category?.sport?.name === 'Football'
+        );
+
+        if (footballEvents.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-futbol"></i>
+                    <p>当前没有正在进行的足球比赛</p>
+                </div>
+            `;
+            return;
+        }
+
+        // 按联赛分组
+        const groupedByTournament = {};
+        footballEvents.forEach(event => {
+            const tournamentId = event.tournament?.id;
+            if (!tournamentId) return;
+
+            if (!groupedByTournament[tournamentId]) {
+                groupedByTournament[tournamentId] = {
+                    info: event.tournament,
+                    matches: []
+                };
+            }
+            groupedByTournament[tournamentId].matches.push(event);
+        });
+
+        // 按优先级排序联赛
+        const tournaments = Object.entries(groupedByTournament)
+            .sort((a, b) => (b[1].info?.priority || 0) - (a[1].info?.priority || 0))
+            .slice(0, 8); // 只显示前8个联赛
+
+        container.innerHTML = `
+            <div class="matches-header">
+                <h3><i class="fas fa-futbol"></i> 实时比赛</h3>
+                <span class="badge online">${footballEvents.length} 场进行中</span>
+            </div>
+
+            <div class="matches-list">
+                ${tournaments.map(([id, data]) => `
+                    <div class="tournament-group">
+                        <div class="tournament-header">
+                            <span class="tournament-flag">${this.getCountryFlag(data.info?.category?.slug)}</span>
+                            <span class="tournament-name">${this.shortenTournamentName(data.info?.name)}</span>
+                            <span class="match-count">${data.matches.length} 场</span>
+                        </div>
+                        ${data.matches.slice(0, 5).map(match => this.renderMatchCard(match)).join('')}
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    },
+
+    renderMatchCard(match) {
+        const homeTeam = match.homeTeam || {};
+        const awayTeam = match.awayTeam || {};
+        const status = match.status || {};
+        const homeScore = match.homeScore?.current ?? match.homeScore?.display ?? '-';
+        const awayScore = match.awayScore?.current ?? match.awayScore?.display ?? '-';
+        const statusInfo = this.getStatusDisplay(status);
+
+        // 获取比赛时间
+        let timeDisplay = '';
+        if (status.type === 'inprogress' && match.time) {
+            const minutes = Math.floor((match.time.currentPeriodStartTimestamp || 0) / 60);
+            timeDisplay = `${minutes}'`;
+        }
+
+        // 获取球队名称（优先使用短名称）
+        const homeName = homeTeam.shortName || homeTeam.name || '主队';
+        const awayName = awayTeam.shortName || awayTeam.name || '客队';
+
+        // 获取球队代码
+        const homeCode = homeTeam.nameCode || '';
+        const awayCode = awayTeam.nameCode || '';
+
+        return `
+            <div class="match-card ${statusInfo.class}">
+                <div class="match-content">
+                    <div class="match-teams">
+                        <div class="team home">
+                            <span class="team-name" title="${homeTeam.name}">${homeName}</span>
+                            ${homeCode ? `<span class="team-code">${homeCode}</span>` : ''}
+                        </div>
+                        <div class="match-score">
+                            <span class="score">${homeScore}</span>
+                            <span class="score-divider">-</span>
+                            <span class="score">${awayScore}</span>
+                        </div>
+                        <div class="team away">
+                            ${awayCode ? `<span class="team-code">${awayCode}</span>` : ''}
+                            <span class="team-name" title="${awayTeam.name}">${awayName}</span>
+                        </div>
+                    </div>
+                    <div class="match-status">
+                        ${statusInfo.class === 'live'
+                            ? `<span class="live-badge"><span class="pulse"></span> ${statusInfo.text}</span>`
+                            : statusInfo.class === 'finished'
+                                ? `<span class="finished-badge">${statusInfo.text}</span>`
+                                : `<span class="time-badge">${statusInfo.text}</span>`
+                        }
+                    </div>
+                </div>
+                <div class="match-actions">
+                    <button class="btn btn-sm" onclick="Matches.viewMatchDetail(${match.id})">
+                        <i class="fas fa-chart-bar"></i> 详情
+                    </button>
+                    <button class="btn btn-sm" onclick="Matches.analyzeMatch('${homeTeam.name?.replace(/'/g, "\\'")}', '${awayTeam.name?.replace(/'/g, "\\'")}')">
+                        <i class="fas fa-brain"></i> 分析
+                    </button>
+                    <button class="btn btn-sm" onclick="Matches.addToRecords('${homeName} vs ${awayName}')">
+                        <i class="fas fa-plus"></i> 记录
+                    </button>
+                </div>
+            </div>
+        `;
     },
 
     async viewMatchDetail(matchId) {
@@ -175,9 +263,8 @@ const Matches = {
             const detail = await ApiConfig.getMatchDetail(matchId);
 
             if (detail) {
-                // 可以显示一个弹窗或跳转到详情页
                 console.log('Match detail:', detail);
-                Utils.showToast('比赛详情已加载', 'success');
+                Utils.showToast('比赛详情已加载（查看控制台）', 'success');
             }
         } catch (error) {
             console.error('Get match detail error:', error);
@@ -231,15 +318,22 @@ const Matches = {
                 resultsContainer.innerHTML = `
                     <div class="search-results-list">
                         <h4>搜索结果 (${result.events.length})</h4>
-                        ${result.events.slice(0, 10).map(event => `
-                            <div class="search-result-item" onclick="Matches.selectTeam(${JSON.stringify(event).replace(/"/g, '&quot;')})">
-                                <div class="team-info">
-                                    <span class="team-name">${event.homeTeam?.name || ''} vs ${event.awayTeam?.name || ''}</span>
-                                    <span class="team-league">${event.tournament?.name || ''}</span>
+                        ${result.events.slice(0, 10).map(event => {
+                            const homeName = event.homeTeam?.shortName || event.homeTeam?.name || '';
+                            const awayName = event.awayTeam?.shortName || event.awayTeam?.name || '';
+                            const date = event.startTimestamp
+                                ? new Date(event.startTimestamp * 1000).toLocaleDateString('zh-CN')
+                                : '';
+                            return `
+                                <div class="search-result-item" onclick="Matches.selectTeam(${JSON.stringify(event).replace(/"/g, '&quot;')})">
+                                    <div class="team-info">
+                                        <span class="team-name">${homeName} vs ${awayName}</span>
+                                        <span class="team-league">${event.tournament?.name || ''}</span>
+                                    </div>
+                                    <span class="match-time">${date}</span>
                                 </div>
-                                <span class="match-time">${event.startTimestamp ? new Date(event.startTimestamp * 1000).toLocaleDateString() : ''}</span>
-                            </div>
-                        `).join('')}
+                            `;
+                        }).join('')}
                     </div>
                 `;
             } else {
@@ -262,7 +356,9 @@ const Matches = {
     },
 
     selectTeam(event) {
-        const matchName = `${event.homeTeam?.name || ''} vs ${event.awayTeam?.name || ''}`;
+        const homeName = event.homeTeam?.shortName || event.homeTeam?.name || '';
+        const awayName = event.awayTeam?.shortName || event.awayTeam?.name || '';
+        const matchName = `${homeName} vs ${awayName}`;
         Utils.showToast(`已选择：${matchName}`, 'success');
     }
 };

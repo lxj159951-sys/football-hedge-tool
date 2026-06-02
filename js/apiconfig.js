@@ -25,16 +25,37 @@ const ApiConfig = {
 
     // 检测运行环境
     detectEnvironment() {
-        const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-        const isVercel = window.location.hostname.includes('vercel.app');
+        const hostname = window.location.hostname;
+        const protocol = window.location.protocol;
+        const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
+        const isFile = protocol === 'file:';
+        const isVercel = hostname.includes('vercel.app');
+        const isGitHubPages = hostname.includes('github.io');
 
-        if (isLocal) {
+        console.log('Environment:', { hostname, protocol, isLocalhost, isFile, isVercel, isGitHubPages });
+
+        // 本地环境或文件协议 - 使用本地代理
+        if (isLocalhost || isFile) {
+            this.PROXY_CONFIG.useProxy = true;
             this.PROXY_CONFIG.currentProxy = this.PROXY_CONFIG.local;
-        } else if (isVercel) {
+            console.log('Using local proxy:', this.PROXY_CONFIG.local);
+        }
+        // Vercel 环境 - 使用 Vercel 代理
+        else if (isVercel) {
+            this.PROXY_CONFIG.useProxy = true;
             this.PROXY_CONFIG.currentProxy = this.PROXY_CONFIG.vercel;
-        } else {
-            // GitHub Pages 或其他环境，不使用代理
+            console.log('Using Vercel proxy');
+        }
+        // GitHub Pages - 不使用代理（需要 CORS 扩展或强制连接）
+        else if (isGitHubPages) {
             this.PROXY_CONFIG.useProxy = false;
+            console.log('GitHub Pages detected, proxy disabled');
+        }
+        // 其他环境 - 默认使用代理
+        else {
+            this.PROXY_CONFIG.useProxy = true;
+            this.PROXY_CONFIG.currentProxy = this.PROXY_CONFIG.local;
+            console.log('Using default proxy');
         }
     },
 
@@ -160,37 +181,34 @@ const ApiConfig = {
         statusBody.className = 'api-status-body';
 
         try {
-            // Build headers
+            let testUrl;
             const headers = {
                 'Content-Type': 'application/json'
             };
 
-            // Add custom headers
-            const customHeadersStr = document.getElementById('apiHeaders').value.trim();
-            if (customHeadersStr) {
-                try {
-                    const customHeaders = JSON.parse(customHeadersStr);
-                    Object.assign(headers, customHeaders);
-                } catch (e) {
-                    // Ignore parse errors
+            // 使用代理测试
+            if (this.PROXY_CONFIG.useProxy && this.PROXY_CONFIG.currentProxy) {
+                // 通过代理测试
+                testUrl = `${this.PROXY_CONFIG.currentProxy}?endpoint=matches/live`;
+                if (apiKey) {
+                    headers['x-rapidapi-key'] = apiKey;
                 }
+                console.log('Testing via proxy:', testUrl);
+            } else {
+                // 直接测试
+                if (type === 'rapidapi') {
+                    headers['x-rapidapi-host'] = this.RAPIDAPI_DEFAULTS.host;
+                    headers['x-rapidapi-key'] = apiKey;
+                    testUrl = `${baseUrl}/matches/live`;
+                } else {
+                    testUrl = baseUrl;
+                }
+                console.log('Testing direct:', testUrl);
             }
-
-            // For RapidAPI
-            if (type === 'rapidapi') {
-                headers['x-rapidapi-host'] = this.RAPIDAPI_DEFAULTS.host;
-                headers['x-rapidapi-key'] = apiKey;
-            }
-
-            // Test with a simple endpoint
-            const testUrl = type === 'rapidapi'
-                ? `${baseUrl}/football-players-search?search=test`
-                : baseUrl;
 
             const response = await fetch(testUrl, {
                 method: 'GET',
-                headers,
-                mode: 'cors'
+                headers
             });
 
             if (response.ok) {

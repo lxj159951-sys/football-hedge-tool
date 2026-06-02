@@ -5,14 +5,14 @@ const http = require('http');
 const https = require('https');
 
 const PORT = 3001;
-const API_HOST = 'free-api-live-football-data.p.rapidapi.com';
+const API_HOST = 'footapi7.p.rapidapi.com';
 const API_KEY = '3578074cb7msh73f3a9e20e60e06p1fe94fjsnc36c0746bd2e';
 
 const server = http.createServer((req, res) => {
     // 设置 CORS 头
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-rapidapi-key, x-rapidapi-host');
 
     // 处理预检请求
     if (req.method === 'OPTIONS') {
@@ -29,20 +29,23 @@ const server = http.createServer((req, res) => {
         res.writeHead(400, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({
             error: 'Missing endpoint parameter',
-            usage: 'http://localhost:3001?endpoint=football-players-search&search=test'
+            usage: 'http://localhost:3001?endpoint=matches/live'
         }));
         return;
     }
 
     // 构建 API URL
-    const apiUrl = new URL(`https://${API_HOST}/${endpoint}`);
+    const apiUrl = new URL(`https://${API_HOST}/api/${endpoint}`);
     url.searchParams.forEach((value, key) => {
         if (key !== 'endpoint') {
             apiUrl.searchParams.append(key, value);
         }
     });
 
-    console.log(`[Proxy] ${apiUrl.toString()}`);
+    console.log(`[Proxy] Requesting: ${apiUrl.toString()}`);
+
+    // 获取 API Key（优先使用请求头中的，否则使用默认的）
+    const apiKey = req.headers['x-rapidapi-key'] || API_KEY;
 
     // 发起 HTTPS 请求
     const options = {
@@ -52,9 +55,11 @@ const server = http.createServer((req, res) => {
         headers: {
             'Content-Type': 'application/json',
             'x-rapidapi-host': API_HOST,
-            'x-rapidapi-key': API_KEY
+            'x-rapidapi-key': apiKey
         }
     };
+
+    console.log(`[Proxy] Options:`, JSON.stringify(options, null, 2));
 
     const proxyReq = https.request(options, (proxyRes) => {
         let data = '';
@@ -64,6 +69,7 @@ const server = http.createServer((req, res) => {
         });
 
         proxyRes.on('end', () => {
+            console.log(`[Proxy] Response status: ${proxyRes.statusCode}`);
             res.writeHead(proxyRes.statusCode, { 'Content-Type': 'application/json' });
             res.end(data);
         });
