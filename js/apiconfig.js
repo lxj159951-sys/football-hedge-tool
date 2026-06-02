@@ -114,6 +114,16 @@ const ApiConfig = {
             });
         }
 
+        // 如果是 Vercel 环境，自动标记为已连接
+        const hostname = window.location.hostname;
+        if (hostname.includes('vercel.app')) {
+            Store.updateApiConfig({
+                ...config,
+                connected: true,
+                lastChecked: new Date().toISOString()
+            });
+        }
+
         this.updateStatus(config);
     },
 
