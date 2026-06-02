@@ -61,6 +61,9 @@ const Matches = {
                 <div class="error-state">
                     <i class="fas fa-exclamation-circle"></i>
                     <p>加载失败：${error.message}</p>
+                    <p style="font-size: 12px; color: var(--text-muted); margin-top: 8px;">
+                        提示：如果是 API 代理问题，请尝试点击 "API 配置" → "强制连接"
+                    </p>
                     <button class="btn btn-sm" onclick="Matches.loadMatches()">重试</button>
                 </div>
             `;

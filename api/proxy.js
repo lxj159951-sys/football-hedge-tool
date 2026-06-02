@@ -34,6 +34,7 @@ module.exports = async (req, res) => {
     const apiKey = req.headers['x-rapidapi-key'] || '3578074cb7msh73f3a9e20e60e06p1fe94fjsnc36c0746bd2e';
 
     console.log(`[Proxy] Requesting: ${apiUrl.toString()}`);
+    console.log(`[Proxy] API Key: ${apiKey.substring(0, 10)}...`);
 
     try {
         // 发起请求
@@ -46,7 +47,11 @@ module.exports = async (req, res) => {
             }
         });
 
+        console.log(`[Proxy] Response status: ${response.status}`);
+
         if (!response.ok) {
+            const errorText = await response.text();
+            console.error(`[Proxy] API Error: ${response.status} - ${errorText}`);
             throw new Error(`API Error: ${response.status} ${response.statusText}`);
         }
 
@@ -55,10 +60,12 @@ module.exports = async (req, res) => {
         // 返回数据
         res.status(200).json(data);
     } catch (error) {
-        console.error('[Proxy] Error:', error);
+        console.error('[Proxy] Error:', error.message);
         res.status(500).json({
             error: 'Failed to fetch from API',
-            message: error.message
+            message: error.message,
+            endpoint: endpoint,
+            apiUrl: apiUrl.toString()
         });
     }
 };
