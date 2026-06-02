@@ -7,7 +7,24 @@
     "start": "node local-proxy.js",
     "proxy": "node local-proxy.js"
   },
-  "keywords": ["football", "hedge", "betting", "arbitrage"],
+  "keywords": [
+    "football",
+    "hedge",
+    "betting",
+    "arbitrage"
+  ],
   "author": "",
-  "license": "MIT"
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lxj159951-sys/football-hedge-tool.git"
+  },
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/lxj159951-sys/football-hedge-tool/issues"
+  },
+  "homepage": "https://github.com/lxj159951-sys/football-hedge-tool#readme",
+  "dependencies": {
+    "@vercel/analytics": "^2.0.1"
+  }
 }
