@@ -1,8 +1,6 @@
 // Vercel Serverless Function - API Proxy
 // 解决浏览器 CORS 限制
 
-const https = require('https');
-
 module.exports = async (req, res) => {
     // 设置 CORS 头
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -21,19 +19,21 @@ module.exports = async (req, res) => {
     if (!endpoint) {
         return res.status(400).json({
             error: 'Missing endpoint parameter',
-            usage: '/api/proxy?endpoint=football-players-search&search=manchester'
+            usage: '/api/proxy?endpoint=matches/live'
         });
     }
 
     // 构建 API URL
-    const apiUrl = new URL(`https://free-api-live-football-data.p.rapidapi.com/${endpoint}`);
+    const apiHost = 'footapi7.p.rapidapi.com';
+    const apiUrl = new URL(`https://${apiHost}/api/${endpoint}`);
     Object.entries(params).forEach(([key, value]) => {
         apiUrl.searchParams.append(key, value);
     });
 
     // API 配置
     const apiKey = req.headers['x-rapidapi-key'] || '3578074cb7msh73f3a9e20e60e06p1fe94fjsnc36c0746bd2e';
-    const apiHost = 'free-api-live-football-data.p.rapidapi.com';
+
+    console.log(`[Proxy] Requesting: ${apiUrl.toString()}`);
 
     try {
         // 发起请求
@@ -55,7 +55,7 @@ module.exports = async (req, res) => {
         // 返回数据
         res.status(200).json(data);
     } catch (error) {
-        console.error('Proxy error:', error);
+        console.error('[Proxy] Error:', error);
         res.status(500).json({
             error: 'Failed to fetch from API',
             message: error.message
