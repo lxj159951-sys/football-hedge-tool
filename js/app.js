@@ -11,6 +11,7 @@ const App = {
         Records.init();
         Bankroll.init();
         ApiConfig.init();
+        Matches.init();
 
         // Setup navigation
         this.setupNavigation();
