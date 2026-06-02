@@ -1,10 +1,10 @@
 // ===== API Configuration =====
 
 const ApiConfig = {
-    // RapidAPI default config
+    // RapidAPI default config - 使用 footapi7（功能更全）
     RAPIDAPI_DEFAULTS: {
-        host: 'free-api-live-football-data.p.rapidapi.com',
-        baseUrl: 'https://free-api-live-football-data.p.rapidapi.com'
+        host: 'footapi7.p.rapidapi.com',
+        baseUrl: 'https://footapi7.p.rapidapi.com'
     },
 
     // Proxy config (解决 CORS 问题)
@@ -88,8 +88,8 @@ const ApiConfig = {
                 baseUrl: this.RAPIDAPI_DEFAULTS.baseUrl,
                 apiKey: defaultApiKey,
                 headers: defaultHeaders,
-                connected: false,
-                lastChecked: null
+                connected: true,
+                lastChecked: new Date().toISOString()
             });
         }
 
@@ -398,15 +398,34 @@ const ApiConfig = {
         return this.makeRequest('football-players-search', { search: query });
     },
 
-    // Get team info (if available)
+    // 获取实时比赛
+    async getLiveMatches() {
+        return this.makeRequest('matches/live');
+    },
+
+    // 获取比赛详情
+    async getMatchDetail(matchId) {
+        return this.makeRequest(`match/${matchId}`);
+    },
+
+    // 获取比赛射门数据
+    async getMatchShotmap(matchId) {
+        return this.makeRequest(`match/${matchId}/shotmap`);
+    },
+
+    // 搜索球队/比赛
+    async searchTeam(query) {
+        return this.makeRequest('search', { query });
+    },
+
+    // 获取球队信息
     async getTeamInfo(teamId) {
-        // This endpoint may vary based on the API
-        try {
-            return await this.makeRequest('teams', { id: teamId });
-        } catch (e) {
-            console.warn('Team info endpoint not available:', e);
-            return null;
-        }
+        return this.makeRequest(`team/${teamId}`);
+    },
+
+    // 获取联赛积分榜
+    async getStandings(tournamentId, seasonId) {
+        return this.makeRequest(`tournament/${tournamentId}/season/${seasonId}/standings/total`);
     },
 
     // Check if API is connected

@@ -1256,7 +1256,7 @@ h2 {
     grid-template-columns: 1fr auto 1fr;
     gap: 16px;
     align-items: center;
-    margin-bottom: 12px;
+    margin-bottom: 8px;
 }
 
 .team {
@@ -1267,6 +1267,7 @@ h2 {
 
 .team.home {
     justify-content: flex-end;
+    text-align: right;
 }
 
 .team.away {
@@ -1274,39 +1275,69 @@ h2 {
 }
 
 .team-name {
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 600;
 }
 
-.team-score {
-    font-size: 24px;
-    font-weight: 700;
-    color: var(--accent-primary);
+.team-code {
+    font-size: 12px;
+    color: var(--text-muted);
+    background: var(--bg-primary);
+    padding: 2px 6px;
+    border-radius: 4px;
 }
 
-.match-vs {
+.match-score {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 28px;
+    font-weight: 700;
+}
+
+.match-score .score {
+    color: var(--text-primary);
+    min-width: 30px;
+    text-align: center;
+}
+
+.match-score .score-divider {
+    color: var(--text-muted);
+}
+
+.match-status {
     text-align: center;
 }
 
 .live-badge {
     background: var(--danger);
     color: white;
-    padding: 4px 10px;
+    padding: 4px 12px;
     border-radius: 12px;
     font-size: 12px;
     font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.live-badge .pulse {
+    width: 8px;
+    height: 8px;
+    background: white;
+    border-radius: 50%;
     animation: pulse 1.5s infinite;
 }
 
 @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.7; }
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
 }
 
 .finished-badge {
     background: var(--bg-hover);
     color: var(--text-muted);
-    padding: 4px 10px;
+    padding: 4px 12px;
     border-radius: 12px;
     font-size: 12px;
 }
@@ -1314,9 +1345,56 @@ h2 {
 .time-badge {
     background: var(--bg-primary);
     color: var(--text-secondary);
-    padding: 4px 10px;
+    padding: 4px 12px;
     border-radius: 12px;
     font-size: 12px;
+}
+
+/* Tournament Groups */
+.tournament-group {
+    margin-bottom: 16px;
+}
+
+.tournament-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: var(--bg-primary);
+    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.tournament-flag {
+    font-size: 16px;
+}
+
+.tournament-name {
+    flex: 1;
+}
+
+.match-count {
+    font-size: 11px;
+    color: var(--text-muted);
+    background: var(--bg-card);
+    padding: 2px 8px;
+    border-radius: 10px;
+}
+
+.tournament-group .match-card {
+    border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+    margin-bottom: 4px;
+}
+
+.tournament-group .match-card:first-of-type {
+    border-radius: 0;
+}
+
+.tournament-group .match-card:last-of-type {
+    border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+    margin-bottom: 0;
 }
 
 .match-odds {
