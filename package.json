@@ -1,0 +1,13 @@
+{
+  "name": "football-hedge-tool",
+  "version": "1.0.0",
+  "description": "足球对冲工具 - 套利计算器、盘中对冲、凯利公式、智能预测",
+  "main": "index.html",
+  "scripts": {
+    "start": "node local-proxy.js",
+    "proxy": "node local-proxy.js"
+  },
+  "keywords": ["football", "hedge", "betting", "arbitrage"],
+  "author": "",
+  "license": "MIT"
+}

@@ -7,9 +7,35 @@ const ApiConfig = {
         baseUrl: 'https://free-api-live-football-data.p.rapidapi.com'
     },
 
+    // Proxy config (解决 CORS 问题)
+    PROXY_CONFIG: {
+        // 本地代理地址
+        local: 'http://localhost:3001',
+        // Vercel 代理地址（部署后自动生效）
+        vercel: '/api/proxy',
+        // 是否启用代理
+        useProxy: true
+    },
+
     init() {
         this.bindEvents();
         this.loadConfig();
+        this.detectEnvironment();
+    },
+
+    // 检测运行环境
+    detectEnvironment() {
+        const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        const isVercel = window.location.hostname.includes('vercel.app');
+
+        if (isLocal) {
+            this.PROXY_CONFIG.currentProxy = this.PROXY_CONFIG.local;
+        } else if (isVercel) {
+            this.PROXY_CONFIG.currentProxy = this.PROXY_CONFIG.vercel;
+        } else {
+            // GitHub Pages 或其他环境，不使用代理
+            this.PROXY_CONFIG.useProxy = false;
+        }
     },
 
     bindEvents() {
@@ -315,7 +341,7 @@ const ApiConfig = {
         }
     },
 
-    // Make API request
+    // Make API request (with proxy support)
     async makeRequest(endpoint, params = {}) {
         const config = Store.getApiConfig();
 
@@ -323,21 +349,36 @@ const ApiConfig = {
             throw new Error('API 未连接');
         }
 
-        // Build URL with params
-        const url = new URL(config.baseUrl + '/' + endpoint);
-        Object.entries(params).forEach(([key, value]) => {
-            url.searchParams.append(key, value);
-        });
-
-        const headers = {
-            'Content-Type': 'application/json',
-            ...config.headers
+        let url;
+        let headers = {
+            'Content-Type': 'application/json'
         };
 
-        // For RapidAPI
-        if (config.type === 'rapidapi') {
-            headers['x-rapidapi-host'] = this.RAPIDAPI_DEFAULTS.host;
-            headers['x-rapidapi-key'] = config.apiKey;
+        // 使用代理模式
+        if (this.PROXY_CONFIG.useProxy && this.PROXY_CONFIG.currentProxy) {
+            // 通过代理请求
+            url = new URL(this.PROXY_CONFIG.currentProxy);
+            url.searchParams.append('endpoint', endpoint);
+            Object.entries(params).forEach(([key, value]) => {
+                url.searchParams.append(key, value);
+            });
+
+            // 传递 API Key 给代理
+            if (config.apiKey) {
+                headers['x-rapidapi-key'] = config.apiKey;
+            }
+        } else {
+            // 直接请求（可能遇到 CORS 限制）
+            url = new URL(config.baseUrl + '/' + endpoint);
+            Object.entries(params).forEach(([key, value]) => {
+                url.searchParams.append(key, value);
+            });
+
+            // For RapidAPI
+            if (config.type === 'rapidapi') {
+                headers['x-rapidapi-host'] = this.RAPIDAPI_DEFAULTS.host;
+                headers['x-rapidapi-key'] = config.apiKey;
+            }
         }
 
         const response = await fetch(url.toString(), {
