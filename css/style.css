@@ -1614,6 +1614,117 @@ h2 {
     }
 }
 
+/* Match Detail Modal */
+.match-detail-header {
+    margin-bottom: 20px;
+}
+
+.tournament-info {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+}
+
+.match-detail-teams {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 20px;
+    align-items: center;
+}
+
+.team-detail {
+    text-align: center;
+}
+
+.team-detail .team-logo {
+    width: 60px;
+    height: 60px;
+    background: var(--bg-primary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0 auto 8px;
+    color: var(--accent-primary);
+}
+
+.team-detail .team-name {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.match-detail-score {
+    text-align: center;
+}
+
+.match-detail-score .score {
+    font-size: 48px;
+    font-weight: 700;
+}
+
+.match-detail-score .score-divider {
+    font-size: 36px;
+    color: var(--text-muted);
+    margin: 0 8px;
+}
+
+.match-detail-score .match-status {
+    margin-top: 8px;
+    font-size: 14px;
+    color: var(--text-muted);
+}
+
+.match-detail-info {
+    background: var(--bg-primary);
+    border-radius: var(--radius-sm);
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.match-detail-info h4 {
+    font-size: 14px;
+    margin-bottom: 12px;
+    color: var(--text-secondary);
+}
+
+.detail-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+.detail-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.detail-item .label {
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.detail-item .value {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.match-detail-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.match-detail-actions .btn {
+    flex: 1;
+}
+
 @media (max-width: 480px) {
     .dashboard-grid {
         grid-template-columns: 1fr;

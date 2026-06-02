@@ -2,14 +2,109 @@
 
 const Prediction = {
     charts: {},
+    currentMatch: null,
 
     init() {
         this.bindEvents();
+        this.checkApiStatus();
     },
 
     bindEvents() {
         document.getElementById('calculatePrediction').addEventListener('click', () => this.calculate());
         document.getElementById('loadTeamData').addEventListener('click', () => this.loadFromApi());
+    },
+
+    checkApiStatus() {
+        const apiConfig = Store.getApiConfig();
+        const notice = document.getElementById('predictionApiNotice');
+        const loadBtn = document.getElementById('loadTeamData');
+
+        if (apiConfig.connected) {
+            if (notice) notice.style.display = 'none';
+            if (loadBtn) loadBtn.disabled = false;
+        } else {
+            if (notice) notice.style.display = 'flex';
+            if (loadBtn) loadBtn.disabled = true;
+        }
+    },
+
+    // 从比赛中心跳转过来时自动加载数据
+    async autoLoadFromMatch(homeTeamName, awayTeamName) {
+        const apiConfig = Store.getApiConfig();
+
+        if (!apiConfig.connected) {
+            Utils.showToast('请先配置 API 以获取球队数据', 'warning');
+            return;
+        }
+
+        Utils.showToast('正在从 API 获取球队数据...', 'info');
+
+        try {
+            // 搜索球队获取数据
+            const homeData = await this.searchTeamData(homeTeamName);
+            const awayData = await this.searchTeamData(awayTeamName);
+
+            if (homeData) {
+                document.getElementById('homeTeamName').value = homeData.name || homeTeamName;
+                document.getElementById('homeGoalsFor').value = homeData.goalsFor || '';
+                document.getElementById('homeGoalsAgainst').value = homeData.goalsAgainst || '';
+            } else {
+                document.getElementById('homeTeamName').value = homeTeamName;
+            }
+
+            if (awayData) {
+                document.getElementById('awayTeamName').value = awayData.name || awayTeamName;
+                document.getElementById('awayGoalsFor').value = awayData.goalsFor || '';
+                document.getElementById('awayGoalsAgainst').value = awayData.goalsAgainst || '';
+            } else {
+                document.getElementById('awayTeamName').value = awayTeamName;
+            }
+
+            // 如果有数据，自动计算预测
+            if (homeData && awayData) {
+                Utils.showToast('数据加载完成，正在计算预测...', 'success');
+                setTimeout(() => this.calculate(), 500);
+            } else {
+                Utils.showToast('部分球队数据未找到，请手动输入', 'warning');
+            }
+        } catch (error) {
+            console.error('Auto load error:', error);
+            Utils.showToast('自动加载失败：' + error.message, 'error');
+        }
+    },
+
+    async searchTeamData(teamName) {
+        try {
+            // 搜索球队
+            const result = await ApiConfig.searchTeam(teamName);
+
+            if (result && result.events && result.events.length > 0) {
+                // 找到该球队的比赛
+                const teamEvent = result.events.find(e =>
+                    e.homeTeam?.name?.toLowerCase().includes(teamName.toLowerCase()) ||
+                    e.awayTeam?.name?.toLowerCase().includes(teamName.toLowerCase())
+                );
+
+                if (teamEvent) {
+                    const isHome = teamEvent.homeTeam?.name?.toLowerCase().includes(teamName.toLowerCase());
+                    const team = isHome ? teamEvent.homeTeam : teamEvent.awayTeam;
+
+                    // 返回球队数据（这里需要根据实际 API 返回的数据结构来解析）
+                    return {
+                        name: team.name || teamName,
+                        id: team.id,
+                        // 注意：实际的进球数据需要从其他 API 端点获取
+                        goalsFor: null,
+                        goalsAgainst: null
+                    };
+                }
+            }
+
+            return null;
+        } catch (error) {
+            console.error('Search team error:', error);
+            return null;
+        }
     },
 
     async loadFromApi() {
@@ -30,24 +125,7 @@ const Prediction = {
         Utils.showToast('正在从 API 搜索球队数据...', 'info');
 
         try {
-            // Search for home team
-            if (homeTeamName) {
-                const homeResult = await ApiConfig.searchPlayers(homeTeamName);
-                if (homeResult && homeResult.response && homeResult.response.suggestions) {
-                    const players = homeResult.response.suggestions.filter(s => s.type === 'player');
-                    if (players.length > 0) {
-                        // Show that we found data (but we need team stats, not player search)
-                        Utils.showToast(`找到 ${players.length} 个相关球员，正在获取球队数据...`, 'info');
-                    }
-                }
-            }
-
-            // Note: This API is for player search, not team stats
-            // For full team stats, a different endpoint would be needed
-            Utils.showToast('提示：当前 API 支持球员搜索，球队统计数据请手动输入', 'warning');
-
-            // Enable the button
-            document.getElementById('loadTeamData').disabled = false;
+            await this.autoLoadFromMatch(homeTeamName, awayTeamName);
         } catch (error) {
             console.error('API error:', error);
             Utils.showToast('API 请求失败：' + error.message, 'error');
@@ -63,7 +141,7 @@ const Prediction = {
         const awayGA = parseFloat(document.getElementById('awayGoalsAgainst').value);
 
         if (isNaN(homeGF) || isNaN(homeGA) || isNaN(awayGF) || isNaN(awayGA)) {
-            Utils.showToast('请填写完整的球队数据', 'error');
+            Utils.showToast('请填写完整的球队数据（场均进球和失球）', 'error');
             return;
         }
 

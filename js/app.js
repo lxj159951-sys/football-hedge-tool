@@ -73,6 +73,16 @@ const App = {
 
         // Close mobile menu
         document.querySelector('.sidebar').classList.remove('open');
+
+        // Check API status when switching to prediction tab
+        if (tabId === 'prediction' && typeof Prediction !== 'undefined') {
+            Prediction.checkApiStatus();
+        }
+
+        // Refresh matches when switching to dashboard
+        if (tabId === 'dashboard' && typeof Matches !== 'undefined') {
+            Matches.loadMatches();
+        }
     },
 
     setupMobileMenu() {

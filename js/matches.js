@@ -262,21 +262,111 @@ const Matches = {
             Utils.showToast('正在加载比赛详情...', 'info');
             const detail = await ApiConfig.getMatchDetail(matchId);
 
-            if (detail) {
-                console.log('Match detail:', detail);
-                Utils.showToast('比赛详情已加载（查看控制台）', 'success');
+            if (detail && detail.event) {
+                this.showMatchDetailModal(detail.event);
+            } else {
+                Utils.showToast('未找到比赛详情', 'warning');
             }
         } catch (error) {
             console.error('Get match detail error:', error);
-            Utils.showToast('加载详情失败', 'error');
+            Utils.showToast('加载详情失败：' + error.message, 'error');
         }
+    },
+
+    showMatchDetailModal(event) {
+        // 创建弹窗显示比赛详情
+        const modal = document.createElement('div');
+        modal.className = 'modal active';
+        modal.id = 'matchDetailModal';
+
+        const homeTeam = event.homeTeam || {};
+        const awayTeam = event.awayTeam || {};
+        const homeScore = event.homeScore?.current ?? '-';
+        const awayScore = event.awayScore?.current ?? '-';
+        const status = event.status || {};
+        const tournament = event.tournament || {};
+
+        modal.innerHTML = `
+            <div class="modal-content" style="max-width: 600px;">
+                <div class="modal-header">
+                    <h3>比赛详情</h3>
+                    <button class="btn-icon modal-close" onclick="document.getElementById('matchDetailModal').remove()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="match-detail-header">
+                        <div class="tournament-info">
+                            <span>${tournament.category?.name || ''}</span>
+                            <span>•</span>
+                            <span>${tournament.name || ''}</span>
+                        </div>
+                        <div class="match-detail-teams">
+                            <div class="team-detail home">
+                                <div class="team-logo">${homeTeam.nameCode || '?'}</div>
+                                <div class="team-name">${homeTeam.name || '主队'}</div>
+                            </div>
+                            <div class="match-detail-score">
+                                <span class="score">${homeScore}</span>
+                                <span class="score-divider">:</span>
+                                <span class="score">${awayScore}</span>
+                                <div class="match-status">${status.description || ''}</div>
+                            </div>
+                            <div class="team-detail away">
+                                <div class="team-logo">${awayTeam.nameCode || '?'}</div>
+                                <div class="team-name">${awayTeam.name || '客队'}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="match-detail-info">
+                        <h4>比赛信息</h4>
+                        <div class="detail-grid">
+                            <div class="detail-item">
+                                <span class="label">比赛ID</span>
+                                <span class="value">${event.id || '-'}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="label">状态</span>
+                                <span class="value">${status.type || '-'}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="label">开始时间</span>
+                                <span class="value">${event.startTimestamp ? new Date(event.startTimestamp * 1000).toLocaleString('zh-CN') : '-'}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="label">赛季</span>
+                                <span class="value">${event.season?.name || '-'}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="match-detail-actions">
+                        <button class="btn btn-primary" onclick="Matches.analyzeMatch('${homeTeam.name?.replace(/'/g, "\\'")}', '${awayTeam.name?.replace(/'/g, "\\'")}'); document.getElementById('matchDetailModal').remove();">
+                            <i class="fas fa-brain"></i> 智能预测
+                        </button>
+                        <button class="btn btn-secondary" onclick="Matches.addToRecords('${homeTeam.shortName || homeTeam.name} vs ${awayTeam.shortName || awayTeam.name}'); document.getElementById('matchDetailModal').remove();">
+                            <i class="fas fa-plus"></i> 添加记录
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
     },
 
     analyzeMatch(homeTeam, awayTeam) {
         // 跳转到智能预测页面
         App.switchTab('prediction');
+
+        // 设置球队名称
         document.getElementById('homeTeamName').value = homeTeam;
         document.getElementById('awayTeamName').value = awayTeam;
+
+        // 自动从 API 加载数据并计算
+        Prediction.autoLoadFromMatch(homeTeam, awayTeam);
+
         Utils.showToast(`正在分析：${homeTeam} vs ${awayTeam}`, 'info');
     },
 
