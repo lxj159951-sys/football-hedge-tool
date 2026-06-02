@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>足球对冲工具</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <!-- 侧边导航 -->
+    <nav class="sidebar">
+        <div class="logo">
+            <i class="fas fa-futbol"></i>
+            <span>足球对冲工具</span>
+        </div>
+        <ul class="nav-links">
+            <li class="active" data-tab="dashboard">
+                <i class="fas fa-tachometer-alt"></i>
+                <span>仪表盘</span>
+            </li>
+            <li data-tab="arbitrage">
+                <i class="fas fa-exchange-alt"></i>
+                <span>套利计算器</span>
+            </li>
+            <li data-tab="hedge">
+                <i class="fas fa-shield-alt"></i>
+                <span>盘中对冲</span>
+            </li>
+            <li data-tab="kelly">
+                <i class="fas fa-calculator"></i>
+                <span>凯利公式</span>
+            </li>
+            <li data-tab="prediction">
+                <i class="fas fa-brain"></i>
+                <span>智能预测</span>
+            </li>
+            <li data-tab="valuebet">
+                <i class="fas fa-gem"></i>
+                <span>价值投注</span>
+            </li>
+            <li data-tab="records">
+                <i class="fas fa-history"></i>
+                <span>投注记录</span>
+            </li>
+            <li data-tab="bankroll">
+                <i class="fas fa-wallet"></i>
+                <span>资金管理</span>
+            </li>
+            <li data-tab="apiconfig">
+                <i class="fas fa-cog"></i>
+                <span>API 配置</span>
+            </li>
+        </ul>
+        <div class="sidebar-footer">
+            <div class="api-status" id="apiStatus">
+                <span class="status-dot offline"></span>
+                <span>API 未连接</span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主内容区 -->
+    <main class="content">
+        <!-- 顶部栏 -->
+        <header class="top-bar">
+            <button class="menu-toggle" id="menuToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="header-actions">
+                <button class="btn-icon" id="themeToggle" title="切换主题">
+                    <i class="fas fa-moon"></i>
+                </button>
+                <button class="btn-icon" id="exportData" title="导出数据">
+                    <i class="fas fa-download"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- 仪表盘 -->
+        <section class="tab-content active" id="dashboard">
+            <h2>仪表盘</h2>
+            <div class="dashboard-grid">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #667eea, #764ba2);">
+                        <i class="fas fa-coins"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>总资金</h3>
+                        <p class="stat-value" id="totalBankroll">¥0</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #f093fb, #f5576c);">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>总盈亏</h3>
+                        <p class="stat-value" id="totalPnl">¥0</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #4facfe, #00f2fe);">
+                        <i class="fas fa-percentage"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>胜率</h3>
+                        <p class="stat-value" id="winRate">0%</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #43e97b, #38f9d7);">
+                        <i class="fas fa-trophy"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>投注次数</h3>
+                        <p class="stat-value" id="totalBets">0</p>
+                    </div>
+                </div>
+            </div>
+            <div class="dashboard-charts">
+                <div class="chart-container">
+                    <h3>盈亏曲线</h3>
+                    <canvas id="pnlChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>投注分布</h3>
+                    <canvas id="distributionChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- 套利计算器 -->
+        <section class="tab-content" id="arbitrage">
+            <h2>套利计算器</h2>
+            <p class="section-desc">输入不同平台的赔率，计算是否存在套利机会</p>
+
+            <div class="calculator-card">
+                <div class="card-header">
+                    <h3>赔率输入</h3>
+                    <button class="btn btn-sm" id="addOutcome">
+                        <i class="fas fa-plus"></i> 添加选项
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div id="outcomesList">
+                        <div class="outcome-row" data-index="0">
+                            <div class="form-group">
+                                <label>选项名称</label>
+                                <input type="text" class="outcome-name" value="主胜" placeholder="如：主胜">
+                            </div>
+                            <div class="form-group">
+                                <label>平台 1 赔率</label>
+                                <input type="number" class="outcome-odds" step="0.01" min="1" placeholder="2.00">
+                            </div>
+                            <div class="form-group">
+                                <label>平台 2 赔率</label>
+                                <input type="number" class="outcome-odds-alt" step="0.01" min="1" placeholder="2.00">
+                            </div>
+                            <button class="btn-icon btn-remove" title="删除">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="outcome-row" data-index="1">
+                            <div class="form-group">
+                                <label>选项名称</label>
+                                <input type="text" class="outcome-name" value="平局" placeholder="如：平局">
+                            </div>
+                            <div class="form-group">
+                                <label>平台 1 赔率</label>
+                                <input type="number" class="outcome-odds" step="0.01" min="1" placeholder="3.00">
+                            </div>
+                            <div class="form-group">
+                                <label>平台 2 赔率</label>
+                                <input type="number" class="outcome-odds-alt" step="0.01" min="1" placeholder="3.00">
+                            </div>
+                            <button class="btn-icon btn-remove" title="删除">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="outcome-row" data-index="2">
+                            <div class="form-group">
+                                <label>选项名称</label>
+                                <input type="text" class="outcome-name" value="客胜" placeholder="如：客胜">
+                            </div>
+                            <div class="form-group">
+                                <label>平台 1 赔率</label>
+                                <input type="number" class="outcome-odds" step="0.01" min="1" placeholder="3.50">
+                            </div>
+                            <div class="form-group">
+                                <label>平台 2 赔率</label>
+                                <input type="number" class="outcome-odds-alt" step="0.01" min="1" placeholder="3.50">
+                            </div>
+                            <button class="btn-icon btn-remove" title="删除">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>总投注金额 (¥)</label>
+                        <input type="number" id="arbTotalStake" value="1000" min="1" placeholder="1000">
+                    </div>
+                    <button class="btn btn-primary btn-block" id="calculateArb">
+                        <i class="fas fa-calculator"></i> 计算套利
+                    </button>
+                </div>
+            </div>
+
+            <div class="result-card" id="arbResult" style="display: none;">
+                <div class="result-header">
+                    <h3>计算结果</h3>
+                    <span class="badge" id="arbStatus"></span>
+                </div>
+                <div class="result-body">
+                    <div class="result-summary" id="arbSummary"></div>
+                    <div class="result-details" id="arbDetails"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 盘中对冲 -->
+        <section class="tab-content" id="hedge">
+            <h2>盘中对冲计算器</h2>
+            <p class="section-desc">赛前已下注，赛中计算对冲金额锁定利润</p>
+
+            <div class="calculator-card">
+                <div class="card-header">
+                    <h3>原始投注</h3>
+                </div>
+                <div class="card-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>投注类型</label>
+                            <select id="hedgeType">
+                                <option value="win">胜平负</option>
+                                <option value="overunder">大小球</option>
+                                <option value="handicap">让球盘</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>投注选项</label>
+                            <select id="hedgeSelection">
+                                <option value="home">主胜</option>
+                                <option value="draw">平局</option>
+                                <option value="away">客胜</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>原始赔率</label>
+                            <input type="number" id="hedgeOriginalOdds" step="0.01" min="1" placeholder="2.00">
+                        </div>
+                        <div class="form-group">
+                            <label>原始投注金额 (¥)</label>
+                            <input type="number" id="hedgeOriginalStake" min="1" placeholder="100">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="calculator-card">
+                <div class="card-header">
+                    <h3>对冲选项</h3>
+                </div>
+                <div class="card-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>对冲赔率</label>
+                            <input type="number" id="hedgeCounterOdds" step="0.01" min="1" placeholder="3.00">
+                        </div>
+                        <div class="form-group">
+                            <label>对冲平台</label>
+                            <input type="text" id="hedgePlatform" placeholder="如：某博">
+                        </div>
+                    </div>
+                    <div class="hedge-strategy">
+                        <label>对冲策略</label>
+                        <div class="strategy-options">
+                            <label class="radio-card">
+                                <input type="radio" name="hedgeStrategy" value="guaranteed" checked>
+                                <span class="radio-label">
+                                    <strong>保底型</strong>
+                                    <small>确保不亏损</small>
+                                </span>
+                            </label>
+                            <label class="radio-card">
+                                <input type="radio" name="hedgeStrategy" value="balanced">
+                                <span class="radio-label">
+                                    <strong>平衡型</strong>
+                                    <small>盈亏平衡</small>
+                                </span>
+                            </label>
+                            <label class="radio-card">
+                                <input type="radio" name="hedgeStrategy" value="aggressive">
+                                <span class="radio-label">
+                                    <strong>激进型</strong>
+                                    <small>追求最大利润</small>
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary btn-block" id="calculateHedge">
+                        <i class="fas fa-calculator"></i> 计算对冲
+                    </button>
+                </div>
+            </div>
+
+            <div class="result-card" id="hedgeResult" style="display: none;">
+                <div class="result-header">
+                    <h3>对冲方案</h3>
+                </div>
+                <div class="result-body" id="hedgeResultBody"></div>
+            </div>
+        </section>
+
+        <!-- 凯利公式 -->
+        <section class="tab-content" id="kelly">
+            <h2>凯利公式计算器</h2>
+            <p class="section-desc">根据胜率和赔率计算最优下注比例</p>
+
+            <div class="calculator-card">
+                <div class="card-header">
+                    <h3>参数输入</h3>
+                </div>
+                <div class="card-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>获胜概率 (%)</label>
+                            <input type="number" id="kellyWinProb" min="1" max="99" placeholder="50">
+                            <small class="form-hint">你预估的获胜概率</small>
+                        </div>
+                        <div class="form-group">
+                            <label>赔率</label>
+                            <input type="number" id="kellyOdds" step="0.01" min="1.01" placeholder="2.00">
+                            <small class="form-hint">十进制赔率</small>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>总资金 (¥)</label>
+                            <input type="number" id="kellyBankroll" min="1" placeholder="10000">
+                        </div>
+                        <div class="form-group">
+                            <label>凯利比例 (%)</label>
+                            <select id="kellyFraction">
+                                <option value="1">全额凯利 (100%)</option>
+                                <option value="0.5" selected>半凯利 (50%) - 推荐</option>
+                                <option value="0.25">四分之一凯利 (25%)</option>
+                                <option value="0.125">八分之一凯利 (12.5%)</option>
+                            </select>
+                            <small class="form-hint">保守策略建议使用半凯利或更低</small>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary btn-block" id="calculateKelly">
+                        <i class="fas fa-calculator"></i> 计算最优下注
+                    </button>
+                </div>
+            </div>
+
+            <div class="result-card" id="kellyResult" style="display: none;">
+                <div class="result-header">
+                    <h3>计算结果</h3>
+                </div>
+                <div class="result-body" id="kellyResultBody"></div>
+            </div>
+
+            <div class="info-card">
+                <h4><i class="fas fa-info-circle"></i> 什么是凯利公式？</h4>
+                <p>凯利公式用于计算在已知胜率和赔率的情况下，应该投入资金的最优比例，以实现长期资金增长最大化。</p>
+                <div class="formula">
+                    f* = (bp - q) / b
+                </div>
+                <p>其中：b = 赔率-1，p = 胜率，q = 败率 (1-p)</p>
+            </div>
+        </section>
+
+        <!-- 智能预测 -->
+        <section class="tab-content" id="prediction">
+            <h2>智能预测</h2>
+            <p class="section-desc">基于泊松分布模型预测比赛结果概率</p>
+
+            <div class="api-notice" id="predictionApiNotice">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span>API 未连接，需手动输入球队数据</span>
+            </div>
+
+            <div class="calculator-card">
+                <div class="card-header">
+                    <h3>球队数据</h3>
+                    <button class="btn btn-sm" id="loadTeamData" disabled>
+                        <i class="fas fa-sync"></i> 从API加载
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="teams-comparison">
+                        <div class="team-card home">
+                            <h4><i class="fas fa-home"></i> 主队</h4>
+                            <div class="form-group">
+                                <label>球队名称</label>
+                                <input type="text" id="homeTeamName" placeholder="如：曼联">
+                            </div>
+                            <div class="form-group">
+                                <label>场均进球</label>
+                                <input type="number" id="homeGoalsFor" step="0.1" min="0" placeholder="1.8">
+                            </div>
+                            <div class="form-group">
+                                <label>场均失球</label>
+                                <input type="number" id="homeGoalsAgainst" step="0.1" min="0" placeholder="1.2">
+                            </div>
+                        </div>
+                        <div class="vs-badge">VS</div>
+                        <div class="team-card away">
+                            <h4><i class="fas fa-plane"></i> 客队</h4>
+                            <div class="form-group">
+                                <label>球队名称</label>
+                                <input type="text" id="awayTeamName" placeholder="如：利物浦">
+                            </div>
+                            <div class="form-group">
+                                <label>场均进球</label>
+                                <input type="number" id="awayGoalsFor" step="0.1" min="0" placeholder="1.5">
+                            </div>
+                            <div class="form-group">
+                                <label>场均失球</label>
+                                <input type="number" id="awayGoalsAgainst" step="0.1" min="0" placeholder="1.0">
+                            </div>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary btn-block" id="calculatePrediction">
+                        <i class="fas fa-brain"></i> 开始预测
+                    </button>
+                </div>
+            </div>
+
+            <div class="result-card" id="predictionResult" style="display: none;">
+                <div class="result-header">
+                    <h3>预测结果</h3>
+                </div>
+                <div class="result-body">
+                    <div class="prediction-summary" id="predictionSummary"></div>
+                    <div class="prediction-charts">
+                        <div class="chart-container">
+                            <h4>胜平负概率</h4>
+                            <canvas id="winProbChart"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <h4>比分概率 (Top 10)</h4>
+                            <canvas id="scoreProbChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="prediction-table" id="predictionTable"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 价值投注 -->
+        <section class="tab-content" id="valuebet">
+            <h2>价值投注发现</h2>
+            <p class="section-desc">对比预测概率和市场赔率，发现价值投注机会</p>
+
+            <div class="calculator-card">
+                <div class="card-header">
+                    <h3>价值分析</h3>
+                </div>
+                <div class="card-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>你预估的胜率 (%)</label>
+                            <input type="number" id="valueEstProb" min="1" max="99" placeholder="60">
+                        </div>
+                        <div class="form-group">
+                            <label>市场赔率</label>
+                            <input type="number" id="valueMarketOdds" step="0.01" min="1.01" placeholder="2.00">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>投注金额 (¥)</label>
+                            <input type="number" id="valueStake" min="1" placeholder="100">
+                        </div>
+                        <div class="form-group">
+                            <label>备注</label>
+                            <input type="text" id="valueNote" placeholder="如：曼联 vs 利物浦">
+                        </div>
+                    </div>
+                    <button class="btn btn-primary btn-block" id="calculateValue">
+                        <i class="fas fa-gem"></i> 分析价值
+                    </button>
+                </div>
+            </div>
+
+            <div class="result-card" id="valueResult" style="display: none;">
+                <div class="result-header">
+                    <h3>分析结果</h3>
+                </div>
+                <div class="result-body" id="valueResultBody"></div>
+            </div>
+
+            <div class="info-card">
+                <h4><i class="fas fa-info-circle"></i> 什么是价值投注？</h4>
+                <p>当你的预估胜率高于市场赔率隐含的胜率时，就存在价值投注机会。</p>
+                <p><strong>价值 = 你的胜率 > 1/赔率</strong></p>
+                <p>例如：你认为某队有 60% 概率赢，赔率为 2.00（隐含 50%），那么这就是一个价值投注。</p>
+            </div>
+        </section>
+
+        <!-- 投注记录 -->
+        <section class="tab-content" id="records">
+            <h2>投注记录</h2>
+            <p class="section-desc">记录和管理所有投注，分析盈亏情况</p>
+
+            <div class="records-header">
+                <button class="btn btn-primary" id="addRecordBtn">
+                    <i class="fas fa-plus"></i> 添加记录
+                </button>
+                <div class="records-filters">
+                    <select id="recordFilter">
+                        <option value="all">全部</option>
+                        <option value="win">赢</option>
+                        <option value="lose">输</option>
+                        <option value="pending">待结算</option>
+                    </select>
+                    <button class="btn btn-sm" id="exportRecords">
+                        <i class="fas fa-file-export"></i> 导出
+                    </button>
+                </div>
+            </div>
+
+            <div class="records-stats">
+                <div class="mini-stat">
+                    <span class="label">总投注</span>
+                    <span class="value" id="recordsTotalBets">0</span>
+                </div>
+                <div class="mini-stat">
+                    <span class="label">总盈亏</span>
+                    <span class="value" id="recordsTotalPnl">¥0</span>
+                </div>
+                <div class="mini-stat">
+                    <span class="label">胜率</span>
+                    <span class="value" id="recordsWinRate">0%</span>
+                </div>
+                <div class="mini-stat">
+                    <span class="label">ROI</span>
+                    <span class="value" id="recordsROI">0%</span>
+                </div>
+            </div>
+
+            <div class="records-table-container">
+                <table class="records-table">
+                    <thead>
+                        <tr>
+                            <th>日期</th>
+                            <th>比赛</th>
+                            <th>类型</th>
+                            <th>选项</th>
+                            <th>赔率</th>
+                            <th>投注</th>
+                            <th>结果</th>
+                            <th>盈亏</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recordsTableBody">
+                        <tr class="empty-row">
+                            <td colspan="9">暂无投注记录</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 添加记录弹窗 -->
+            <div class="modal" id="recordModal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>添加投注记录</h3>
+                        <button class="btn-icon modal-close" id="closeRecordModal">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label>比赛</label>
+                            <input type="text" id="recordMatch" placeholder="如：曼联 vs 利物浦">
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>投注类型</label>
+                                <select id="recordType">
+                                    <option value="胜平负">胜平负</option>
+                                    <option value="大小球">大小球</option>
+                                    <option value="让球盘">让球盘</option>
+                                    <option value="其他">其他</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>投注选项</label>
+                                <input type="text" id="recordSelection" placeholder="如：主胜">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>赔率</label>
+                                <input type="number" id="recordOdds" step="0.01" min="1.01" placeholder="2.00">
+                            </div>
+                            <div class="form-group">
+                                <label>投注金额 (¥)</label>
+                                <input type="number" id="recordStake" min="1" placeholder="100">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>结果</label>
+                                <select id="recordResult">
+                                    <option value="pending">待结算</option>
+                                    <option value="win">赢</option>
+                                    <option value="lose">输</option>
+                                    <option value="void">取消</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>日期</label>
+                                <input type="date" id="recordDate">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>备注</label>
+                            <textarea id="recordNote" rows="2" placeholder="可选备注"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" id="cancelRecord">取消</button>
+                        <button class="btn btn-primary" id="saveRecord">保存</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 资金管理 -->
+        <section class="tab-content" id="bankroll">
+            <h2>资金管理</h2>
+            <p class="section-desc">管理总资金、设定止损线和盈利目标</p>
+
+            <div class="dashboard-grid">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #667eea, #764ba2);">
+                        <i class="fas fa-coins"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>当前资金</h3>
+                        <p class="stat-value" id="currentBankroll">¥0</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #f093fb, #f5576c);">
+                        <i class="fas fa-arrow-down"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>止损线</h3>
+                        <p class="stat-value" id="stopLoss">¥0</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #43e97b, #38f9d7);">
+                        <i class="fas fa-arrow-up"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>盈利目标</h3>
+                        <p class="stat-value" id="profitTarget">¥0</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #fa709a, #fee140);">
+                        <i class="fas fa-percentage"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>单次最大投注</h3>
+                        <p class="stat-value" id="maxBetPercent">10%</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="calculator-card">
+                <div class="card-header">
+                    <h3>资金设置</h3>
+                </div>
+                <div class="card-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>初始资金 (¥)</label>
+                            <input type="number" id="initialBankroll" min="1" placeholder="10000">
+                        </div>
+                        <div class="form-group">
+                            <label>止损线 (¥)</label>
+                            <input type="number" id="stopLossAmount" min="0" placeholder="5000">
+                            <small class="form-hint">亏损到此金额时提醒</small>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>盈利目标 (¥)</label>
+                            <input type="number" id="profitTargetAmount" min="0" placeholder="20000">
+                            <small class="form-hint">盈利到此金额时提醒</small>
+                        </div>
+                        <div class="form-group">
+                            <label>单次最大投注比例 (%)</label>
+                            <input type="number" id="maxBetPercentage" min="1" max="100" value="10">
+                            <small class="form-hint">每次最多投总资金的百分比</small>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary btn-block" id="saveBankroll">
+                        <i class="fas fa-save"></i> 保存设置
+                    </button>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <h3>资金走势</h3>
+                <canvas id="bankrollChart"></canvas>
+            </div>
+        </section>
+
+        <!-- API 配置 -->
+        <section class="tab-content" id="apiconfig">
+            <h2>API 配置</h2>
+            <p class="section-desc">配置数据源接口，获取实时数据</p>
+
+            <div class="api-status-card" id="apiStatusCard">
+                <div class="api-status-header">
+                    <h3>连接状态</h3>
+                    <span class="badge offline" id="apiConnectionStatus">未连接</span>
+                </div>
+                <div class="api-status-body" id="apiStatusBody">
+                    <i class="fas fa-plug"></i>
+                    <p>请配置 API 接口地址和密钥</p>
+                </div>
+            </div>
+
+            <div class="calculator-card">
+                <div class="card-header">
+                    <h3>API 设置</h3>
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label>数据源类型</label>
+                        <select id="apiType">
+                            <option value="custom">自定义 API</option>
+                            <option value="football-data">football-data.org</option>
+                            <option value="other">其他</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>API 基础地址</label>
+                        <input type="text" id="apiBaseUrl" placeholder="https://api.example.com/v1">
+                        <small class="form-hint">不包含具体端点的域名部分</small>
+                    </div>
+                    <div class="form-group">
+                        <label>API Key</label>
+                        <div class="input-group">
+                            <input type="password" id="apiKey" placeholder="your-api-key-here">
+                            <button class="btn-icon" id="toggleApiKey" title="显示/隐藏">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>请求头 (可选)</label>
+                        <textarea id="apiHeaders" rows="3" placeholder='{"X-Custom-Header": "value"}'></textarea>
+                        <small class="form-hint">JSON 格式</small>
+                    </div>
+                    <div class="form-actions">
+                        <button class="btn btn-secondary" id="testApiConnection">
+                            <i class="fas fa-plug"></i> 测试连接
+                        </button>
+                        <button class="btn btn-primary" id="saveApiConfig">
+                            <i class="fas fa-save"></i> 保存配置
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-card">
+                <h4><i class="fas fa-info-circle"></i> 关于数据源</h4>
+                <p>本工具支持接入任何符合 RESTful 规范的足球数据 API。以下是推荐的免费数据源：</p>
+                <ul>
+                    <li><strong>football-data.org</strong> — 免费足球数据 API，包含各大联赛数据</li>
+                    <li><strong>api-football.com</strong> — 功能丰富的足球 API（有免费额度）</li>
+                    <li><strong>openfootball</strong> — 开源足球数据</li>
+                </ul>
+                <p>配置 API 后，智能预测、球队查询等功能将自动获取真实数据。</p>
+            </div>
+        </section>
+    </main>
+
+    <!-- 提示框 -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="js/utils.js"></script>
+    <script src="js/store.js"></script>
+    <script src="js/arbitrage.js"></script>
+    <script src="js/hedge.js"></script>
+    <script src="js/kelly.js"></script>
+    <script src="js/prediction.js"></script>
+    <script src="js/valuebet.js"></script>
+    <script src="js/records.js"></script>
+    <script src="js/bankroll.js"></script>
+    <script src="js/apiconfig.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
