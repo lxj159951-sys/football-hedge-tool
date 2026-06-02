@@ -1,9 +1,11 @@
 // ===== Arbitrage Calculator =====
 
 const Arbitrage = {
+    platformCount: 3, // 默认 3 个平台
+
     init() {
         this.bindEvents();
-        this.loadDefaultOutcomes();
+        this.setupPlatformSelector();
     },
 
     bindEvents() {
@@ -19,10 +21,58 @@ const Arbitrage = {
                 this.removeOutcome(e.target.closest('.outcome-row'));
             }
         });
+
+        // Add platform
+        document.getElementById('addPlatform')?.addEventListener('click', () => this.addPlatform());
+
+        // Remove platform (delegated)
+        document.getElementById('outcomesList')?.addEventListener('click', (e) => {
+            if (e.target.closest('.btn-remove-platform')) {
+                this.removePlatform(e.target.closest('.btn-remove-platform').dataset.platform);
+            }
+        });
     },
 
-    loadDefaultOutcomes() {
-        // Already loaded in HTML
+    setupPlatformSelector() {
+        // 初始化平台数量选择器
+        const selector = document.getElementById('platformCount');
+        if (selector) {
+            selector.value = this.platformCount;
+            selector.addEventListener('change', (e) => {
+                this.platformCount = parseInt(e.target.value);
+                this.rebuildOutcomeRows();
+            });
+        }
+    },
+
+    rebuildOutcomeRows() {
+        const list = document.getElementById('outcomesList');
+        const existingOutcomes = [];
+
+        // 保存现有数据
+        list.querySelectorAll('.outcome-row').forEach(row => {
+            const name = row.querySelector('.outcome-name')?.value || '';
+            const odds = [];
+            row.querySelectorAll('.outcome-odds-input').forEach(input => {
+                odds.push(input.value);
+            });
+            existingOutcomes.push({ name, odds });
+        });
+
+        // 清空列表
+        list.innerHTML = '';
+
+        // 重新创建行
+        if (existingOutcomes.length > 0) {
+            existingOutcomes.forEach((outcome, index) => {
+                this.addOutcomeWithData(outcome.name, outcome.odds);
+            });
+        } else {
+            // 默认 3 个选项
+            this.addOutcomeWithData('主胜', []);
+            this.addOutcomeWithData('平局', []);
+            this.addOutcomeWithData('客胜', []);
+        }
     },
 
     addOutcome() {
@@ -34,22 +84,34 @@ const Arbitrage = {
             return;
         }
 
+        this.addOutcomeWithData(`选项 ${count + 1}`, []);
+    },
+
+    addOutcomeWithData(name, oddsValues) {
+        const list = document.getElementById('outcomesList');
+        const index = list.children.length;
+
         const row = document.createElement('div');
         row.className = 'outcome-row';
-        row.dataset.index = count;
+        row.dataset.index = index;
+
+        let platformInputs = '';
+        for (let i = 0; i < this.platformCount; i++) {
+            const value = oddsValues[i] || '';
+            platformInputs += `
+                <div class="form-group">
+                    <label>平台 ${i + 1} 赔率</label>
+                    <input type="number" class="outcome-odds-input" data-platform="${i}" step="0.01" min="1" placeholder="2.00" value="${value}">
+                </div>
+            `;
+        }
+
         row.innerHTML = `
             <div class="form-group">
                 <label>选项名称</label>
-                <input type="text" class="outcome-name" value="选项 ${count + 1}" placeholder="如：主胜">
+                <input type="text" class="outcome-name" value="${name}" placeholder="如：主胜">
             </div>
-            <div class="form-group">
-                <label>平台 1 赔率</label>
-                <input type="number" class="outcome-odds" step="0.01" min="1" placeholder="2.00">
-            </div>
-            <div class="form-group">
-                <label>平台 2 赔率</label>
-                <input type="number" class="outcome-odds-alt" step="0.01" min="1" placeholder="2.00">
-            </div>
+            ${platformInputs}
             <button class="btn-icon btn-remove" title="删除">
                 <i class="fas fa-times"></i>
             </button>
@@ -67,22 +129,49 @@ const Arbitrage = {
         row.remove();
     },
 
+    addPlatform() {
+        if (this.platformCount >= 6) {
+            Utils.showToast('最多支持 6 个平台', 'warning');
+            return;
+        }
+        this.platformCount++;
+        document.getElementById('platformCount').value = this.platformCount;
+        this.rebuildOutcomeRows();
+    },
+
+    removePlatform(platformIndex) {
+        if (this.platformCount <= 2) {
+            Utils.showToast('至少需要 2 个平台', 'warning');
+            return;
+        }
+        this.platformCount--;
+        document.getElementById('platformCount').value = this.platformCount;
+        this.rebuildOutcomeRows();
+    },
+
     getOutcomes() {
         const rows = document.querySelectorAll('.outcome-row');
         const outcomes = [];
 
         rows.forEach(row => {
             const name = row.querySelector('.outcome-name').value || '未知';
-            const odds1 = parseFloat(row.querySelector('.outcome-odds').value);
-            const odds2 = parseFloat(row.querySelector('.outcome-odds-alt').value);
+            const oddsInputs = row.querySelectorAll('.outcome-odds-input');
+            const odds = [];
 
-            if (odds1 && odds2) {
-                // Use the better odds for arbitrage
+            oddsInputs.forEach(input => {
+                const value = parseFloat(input.value);
+                if (value && value > 1) {
+                    odds.push(value);
+                }
+            });
+
+            if (odds.length > 0) {
+                // 使用最高赔率进行套利计算
+                const bestOdds = Math.max(...odds);
                 outcomes.push({
                     name,
-                    bestOdds: Math.max(odds1, odds2),
-                    odds1,
-                    odds2
+                    bestOdds,
+                    allOdds: odds
                 });
             }
         });
@@ -154,30 +243,46 @@ const Arbitrage = {
             </div>
         `;
 
+        // 构建表格头
+        let tableHeaders = '<th>选项</th>';
+        for (let i = 0; i < this.platformCount; i++) {
+            tableHeaders += `<th>平台 ${i + 1}</th>`;
+        }
+        tableHeaders += '<th>最佳赔率</th><th>隐含概率</th><th>建议投注</th><th>潜在回报</th>';
+
+        // 构建表格内容
+        let tableRows = '';
+        outcomes.forEach((o, i) => {
+            let oddsCells = '';
+            for (let j = 0; j < this.platformCount; j++) {
+                const oddsValue = o.allOdds[j] || '-';
+                const isBest = o.allOdds[j] === o.bestOdds;
+                oddsCells += `<td ${isBest ? 'style="color: var(--success); font-weight: bold;"' : ''}>${oddsValue !== '-' ? Utils.formatOdds(oddsValue) : '-'}</td>`;
+            }
+
+            tableRows += `
+                <tr>
+                    <td>${o.name}</td>
+                    ${oddsCells}
+                    <td style="color: var(--success); font-weight: bold;">${Utils.formatOdds(o.bestOdds)}</td>
+                    <td>${Utils.formatPercent(Utils.impliedProbability(o.bestOdds))}</td>
+                    <td>${Utils.formatCurrency(stakes[i])}</td>
+                    <td>${Utils.formatCurrency(stakes[i] * o.bestOdds)}</td>
+                </tr>
+            `;
+        });
+
         // Details table
         details.innerHTML = `
             <table>
                 <thead>
-                    <tr>
-                        <th>选项</th>
-                        <th>最佳赔率</th>
-                        <th>隐含概率</th>
-                        <th>建议投注</th>
-                        <th>潜在回报</th>
-                    </tr>
+                    <tr>${tableHeaders}</tr>
                 </thead>
                 <tbody>
-                    ${outcomes.map((o, i) => `
-                        <tr>
-                            <td>${o.name}</td>
-                            <td>${Utils.formatOdds(o.bestOdds)}</td>
-                            <td>${Utils.formatPercent(Utils.impliedProbability(o.bestOdds))}</td>
-                            <td>${Utils.formatCurrency(stakes[i])}</td>
-                            <td>${Utils.formatCurrency(stakes[i] * o.bestOdds)}</td>
-                        </tr>
-                    `).join('')}
+                    ${tableRows}
                     <tr style="font-weight: bold; background: var(--bg-hover);">
                         <td>合计</td>
+                        ${'<td>-</td>'.repeat(this.platformCount)}
                         <td>-</td>
                         <td>${Utils.formatPercent(arbCheck.totalImplied)}</td>
                         <td>${Utils.formatCurrency(totalStakes)}</td>

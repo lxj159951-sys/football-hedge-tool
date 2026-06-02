@@ -448,8 +448,8 @@ h2 {
 
 /* ===== Outcome Rows (Arbitrage) ===== */
 .outcome-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr auto;
+    display: flex;
+    flex-wrap: wrap;
     gap: 12px;
     align-items: end;
     padding: 12px;
@@ -460,6 +460,38 @@ h2 {
 
 .outcome-row .form-group {
     margin-bottom: 0;
+    min-width: 100px;
+    flex: 1;
+}
+
+.outcome-row .form-group:first-child {
+    min-width: 120px;
+    flex: 1.5;
+}
+
+.outcome-row .btn-remove {
+    flex-shrink: 0;
+}
+
+.platform-select {
+    padding: 6px 12px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.platform-select:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 
 .btn-remove {
