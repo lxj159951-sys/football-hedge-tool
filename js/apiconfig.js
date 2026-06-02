@@ -349,19 +349,21 @@ const ApiConfig = {
             throw new Error('API 未连接');
         }
 
-        let url;
+        let urlStr;
         let headers = {
             'Content-Type': 'application/json'
         };
 
         // 使用代理模式
         if (this.PROXY_CONFIG.useProxy && this.PROXY_CONFIG.currentProxy) {
-            // 通过代理请求
-            url = new URL(this.PROXY_CONFIG.currentProxy);
-            url.searchParams.append('endpoint', endpoint);
+            // 通过代理请求 - 使用字符串拼接避免 URL 构造函数问题
+            const proxyBase = this.PROXY_CONFIG.currentProxy;
+            const queryParams = new URLSearchParams();
+            queryParams.append('endpoint', endpoint);
             Object.entries(params).forEach(([key, value]) => {
-                url.searchParams.append(key, value);
+                queryParams.append(key, value);
             });
+            urlStr = `${proxyBase}?${queryParams.toString()}`;
 
             // 传递 API Key 给代理
             if (config.apiKey) {
@@ -369,10 +371,14 @@ const ApiConfig = {
             }
         } else {
             // 直接请求（可能遇到 CORS 限制）
-            url = new URL(config.baseUrl + '/' + endpoint);
+            const baseUrl = config.baseUrl;
+            const queryParams = new URLSearchParams();
             Object.entries(params).forEach(([key, value]) => {
-                url.searchParams.append(key, value);
+                queryParams.append(key, value);
             });
+            urlStr = queryParams.toString()
+                ? `${baseUrl}/${endpoint}?${queryParams.toString()}`
+                : `${baseUrl}/${endpoint}`;
 
             // For RapidAPI
             if (config.type === 'rapidapi') {
@@ -381,7 +387,9 @@ const ApiConfig = {
             }
         }
 
-        const response = await fetch(url.toString(), {
+        console.log('API Request:', urlStr);
+
+        const response = await fetch(urlStr, {
             method: 'GET',
             headers
         });
