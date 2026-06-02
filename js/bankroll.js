@@ -86,10 +86,16 @@ const Bankroll = {
 
         // Consecutive loss warning
         const records = Store.getRecords();
-        const recentRecords = records.slice(0, 5);
-        const allLost = recentRecords.length >= 3 && recentRecords.every(r => r.result === 'lose');
-        if (allLost) {
-            Utils.showToast('⚠️ 警告：连续亏损，建议暂停冷静。', 'warning', 5000);
+        let consecutiveLosses = 0;
+        for (const r of records) {
+            if (r.result === 'lose') {
+                consecutiveLosses++;
+            } else {
+                break;
+            }
+        }
+        if (consecutiveLosses >= 3) {
+            Utils.showToast(`⚠️ 警告：连续亏损 ${consecutiveLosses} 次，建议暂停冷静。`, 'warning', 5000);
         }
     },
 

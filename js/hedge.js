@@ -68,35 +68,40 @@ const Hedge = {
 
         switch (strategy) {
             case 'guaranteed':
-                // Guaranteed no loss - ensure both outcomes break even or profit
-                // If original wins: profit = originalStake * (originalOdds - 1) - hedgeStake
-                // If hedge wins: profit = hedgeStake * (counterOdds - 1) - originalStake
-                // Set them equal: originalStake * (originalOdds - 1) - hedgeStake = hedgeStake * (counterOdds - 1) - originalStake
-                // Solve for hedgeStake
+                // 保底型：确保两边利润相等，不亏损
+                // 原始赢：利润 = originalStake * (originalOdds - 1) - hedgeStake
+                // 对冲赢：利润 = hedgeStake * (counterOdds - 1) - originalStake
+                // 两边相等，求解 hedgeStake
                 hedgeStake = (originalStake * originalOdds) / counterOdds;
                 hedgeStake = Math.round(hedgeStake * 100) / 100;
-                guaranteedProfit = originalPotentialWin - hedgeStake;
-                maxProfit = guaranteedProfit;
+                // 两边利润相等
+                const profitIfOriginalWins = originalPotentialWin - hedgeStake;
+                const profitIfHedgeWins = hedgeStake * (counterOdds - 1) - originalStake;
+                guaranteedProfit = Math.min(profitIfOriginalWins, profitIfHedgeWins);
+                maxProfit = Math.max(profitIfOriginalWins, profitIfHedgeWins);
                 minProfit = guaranteedProfit;
                 break;
 
             case 'balanced':
-                // Balanced - equal profit on both sides
-                hedgeStake = (originalStake * originalOdds) / counterOdds;
-                hedgeStake = Math.round(hedgeStake * 100) / 100;
-                guaranteedProfit = (originalStake * originalOdds - hedgeStake * counterOdds) / 2;
-                maxProfit = guaranteedProfit;
+                // 平衡型：对冲较少，原始赢时利润更高，但对冲赢时利润较低
+                // 对冲金额 = 原始投注的 70%（可调整）
+                hedgeStake = Math.round((originalStake * 0.7) * 100) / 100;
+                const balancedProfitIfOriginal = originalPotentialWin - hedgeStake;
+                const balancedProfitIfHedge = hedgeStake * (counterOdds - 1) - originalStake;
+                guaranteedProfit = Math.min(balancedProfitIfOriginal, balancedProfitIfHedge);
+                maxProfit = Math.max(balancedProfitIfOriginal, balancedProfitIfHedge);
                 minProfit = guaranteedProfit;
                 break;
 
             case 'aggressive':
-                // Aggressive - maximize potential profit, accept more risk
-                // Hedge just enough to cover the original stake
-                hedgeStake = originalStake / (counterOdds - 1);
-                hedgeStake = Math.round(hedgeStake * 100) / 100;
-                guaranteedProfit = originalPotentialWin - hedgeStake;
-                maxProfit = originalStake * (originalOdds - 1) - hedgeStake;
-                minProfit = hedgeStake * (counterOdds - 1) - originalStake;
+                // 激进型：只对冲一小部分，追求高利润
+                // 对冲金额 = 原始投注的 30%（可调整）
+                hedgeStake = Math.round((originalStake * 0.3) * 100) / 100;
+                const aggressiveProfitIfOriginal = originalPotentialWin - hedgeStake;
+                const aggressiveProfitIfHedge = hedgeStake * (counterOdds - 1) - originalStake;
+                guaranteedProfit = Math.min(aggressiveProfitIfOriginal, aggressiveProfitIfHedge);
+                maxProfit = aggressiveProfitIfOriginal; // 原始赢时利润最高
+                minProfit = guaranteedProfit;
                 break;
 
             default:

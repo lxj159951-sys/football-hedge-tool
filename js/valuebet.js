@@ -212,5 +212,9 @@ const ValueBet = {
 
         Store.addRecord(record);
         Utils.showToast('已保存到投注记录', 'success');
+
+        // 刷新投注记录和仪表盘
+        Records.loadRecords();
+        App.updateDashboard();
     }
 };

@@ -208,19 +208,23 @@ const Matches = {
         }
 
         // 获取球队名称（优先使用短名称）
-        const homeName = homeTeam.shortName || homeTeam.name || '主队';
-        const awayName = awayTeam.shortName || awayTeam.name || '客队';
+        const homeName = Utils.escapeHtml(homeTeam.shortName || homeTeam.name || '主队');
+        const awayName = Utils.escapeHtml(awayTeam.shortName || awayTeam.name || '客队');
 
         // 获取球队代码
-        const homeCode = homeTeam.nameCode || '';
-        const awayCode = awayTeam.nameCode || '';
+        const homeCode = Utils.escapeHtml(homeTeam.nameCode || '');
+        const awayCode = Utils.escapeHtml(awayTeam.nameCode || '');
+
+        // 获取完整名称（用于 title 属性）
+        const homeFullName = Utils.escapeHtml(homeTeam.name || '');
+        const awayFullName = Utils.escapeHtml(awayTeam.name || '');
 
         return `
             <div class="match-card ${statusInfo.class}">
                 <div class="match-content">
                     <div class="match-teams">
                         <div class="team home">
-                            <span class="team-name" title="${homeTeam.name}">${homeName}</span>
+                            <span class="team-name" title="${homeFullName}">${homeName}</span>
                             ${homeCode ? `<span class="team-code">${homeCode}</span>` : ''}
                         </div>
                         <div class="match-score">
@@ -230,7 +234,7 @@ const Matches = {
                         </div>
                         <div class="team away">
                             ${awayCode ? `<span class="team-code">${awayCode}</span>` : ''}
-                            <span class="team-name" title="${awayTeam.name}">${awayName}</span>
+                            <span class="team-name" title="${awayFullName}">${awayName}</span>
                         </div>
                     </div>
                     <div class="match-status">
@@ -246,7 +250,7 @@ const Matches = {
                     <button class="btn btn-sm" onclick="Matches.viewMatchDetail(${match.id})">
                         <i class="fas fa-chart-bar"></i> 详情
                     </button>
-                    <button class="btn btn-sm" onclick="Matches.analyzeMatch('${homeTeam.name?.replace(/'/g, "\\'")}', '${awayTeam.name?.replace(/'/g, "\\'")}')">
+                    <button class="btn btn-sm" onclick="Matches.analyzeMatch('${homeFullName.replace(/'/g, "\\'")}', '${awayFullName.replace(/'/g, "\\'")}')">
                         <i class="fas fa-brain"></i> 分析
                     </button>
                     <button class="btn btn-sm" onclick="Matches.addToRecords('${homeName} vs ${awayName}')">
@@ -274,6 +278,12 @@ const Matches = {
     },
 
     showMatchDetailModal(event) {
+        // 移除已存在的模态框
+        const existingModal = document.getElementById('matchDetailModal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+
         // 创建弹窗显示比赛详情
         const modal = document.createElement('div');
         modal.className = 'modal active';
@@ -286,6 +296,18 @@ const Matches = {
         const status = event.status || {};
         const tournament = event.tournament || {};
 
+        // 转义所有 API 数据
+        const homeName = Utils.escapeHtml(homeTeam.name || '主队');
+        const awayName = Utils.escapeHtml(awayTeam.name || '客队');
+        const homeCode = Utils.escapeHtml(homeTeam.nameCode || '?');
+        const awayCode = Utils.escapeHtml(awayTeam.nameCode || '?');
+        const homeShortName = Utils.escapeHtml(homeTeam.shortName || homeTeam.name || '');
+        const awayShortName = Utils.escapeHtml(awayTeam.shortName || awayTeam.name || '');
+        const tournamentName = Utils.escapeHtml(tournament.name || '');
+        const countryName = Utils.escapeHtml(tournament.category?.name || '');
+        const statusDesc = Utils.escapeHtml(status.description || '');
+        const seasonName = Utils.escapeHtml(event.season?.name || '-');
+
         modal.innerHTML = `
             <div class="modal-content" style="max-width: 600px;">
                 <div class="modal-header">
@@ -297,24 +319,24 @@ const Matches = {
                 <div class="modal-body">
                     <div class="match-detail-header">
                         <div class="tournament-info">
-                            <span>${tournament.category?.name || ''}</span>
+                            <span>${countryName}</span>
                             <span>•</span>
-                            <span>${tournament.name || ''}</span>
+                            <span>${tournamentName}</span>
                         </div>
                         <div class="match-detail-teams">
                             <div class="team-detail home">
-                                <div class="team-logo">${homeTeam.nameCode || '?'}</div>
-                                <div class="team-name">${homeTeam.name || '主队'}</div>
+                                <div class="team-logo">${homeCode}</div>
+                                <div class="team-name">${homeName}</div>
                             </div>
                             <div class="match-detail-score">
                                 <span class="score">${homeScore}</span>
                                 <span class="score-divider">:</span>
                                 <span class="score">${awayScore}</span>
-                                <div class="match-status">${status.description || ''}</div>
+                                <div class="match-status">${statusDesc}</div>
                             </div>
                             <div class="team-detail away">
-                                <div class="team-logo">${awayTeam.nameCode || '?'}</div>
-                                <div class="team-name">${awayTeam.name || '客队'}</div>
+                                <div class="team-logo">${awayCode}</div>
+                                <div class="team-name">${awayName}</div>
                             </div>
                         </div>
                     </div>
@@ -336,16 +358,16 @@ const Matches = {
                             </div>
                             <div class="detail-item">
                                 <span class="label">赛季</span>
-                                <span class="value">${event.season?.name || '-'}</span>
+                                <span class="value">${seasonName}</span>
                             </div>
                         </div>
                     </div>
 
                     <div class="match-detail-actions">
-                        <button class="btn btn-primary" onclick="Matches.analyzeMatch('${homeTeam.name?.replace(/'/g, "\\'")}', '${awayTeam.name?.replace(/'/g, "\\'")}'); document.getElementById('matchDetailModal').remove();">
+                        <button class="btn btn-primary" onclick="Matches.analyzeMatch('${homeName.replace(/'/g, "\\'")}', '${awayName.replace(/'/g, "\\'")}'); document.getElementById('matchDetailModal').remove();">
                             <i class="fas fa-brain"></i> 智能预测
                         </button>
-                        <button class="btn btn-secondary" onclick="Matches.addToRecords('${homeTeam.shortName || homeTeam.name} vs ${awayTeam.shortName || awayTeam.name}'); document.getElementById('matchDetailModal').remove();">
+                        <button class="btn btn-secondary" onclick="Matches.addToRecords('${homeShortName} vs ${awayShortName}'); document.getElementById('matchDetailModal').remove();">
                             <i class="fas fa-plus"></i> 添加记录
                         </button>
                     </div>
@@ -449,6 +471,21 @@ const Matches = {
         const homeName = event.homeTeam?.shortName || event.homeTeam?.name || '';
         const awayName = event.awayTeam?.shortName || event.awayTeam?.name || '';
         const matchName = `${homeName} vs ${awayName}`;
-        Utils.showToast(`已选择：${matchName}`, 'success');
+
+        // 跳转到智能预测页面并自动加载数据
+        App.switchTab('prediction');
+        document.getElementById('homeTeamName').value = homeName;
+        document.getElementById('awayTeamName').value = awayName;
+
+        // 自动从 API 加载数据
+        Prediction.autoLoadFromMatch(homeName, awayName);
+
+        Utils.showToast(`已选择：${matchName}，正在加载数据...`, 'success');
+
+        // 清空搜索结果
+        const resultsContainer = document.getElementById('searchResults');
+        if (resultsContainer) {
+            resultsContainer.innerHTML = '';
+        }
     }
 };

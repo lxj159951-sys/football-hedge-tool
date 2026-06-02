@@ -74,14 +74,55 @@ const App = {
         // Close mobile menu
         document.querySelector('.sidebar').classList.remove('open');
 
-        // Check API status when switching to prediction tab
-        if (tabId === 'prediction' && typeof Prediction !== 'undefined') {
-            Prediction.checkApiStatus();
-        }
+        // 根据标签页刷新数据
+        switch (tabId) {
+            case 'dashboard':
+                if (typeof Matches !== 'undefined') {
+                    Matches.loadMatches();
+                }
+                this.updateDashboard();
+                break;
 
-        // Refresh matches when switching to dashboard
-        if (tabId === 'dashboard' && typeof Matches !== 'undefined') {
-            Matches.loadMatches();
+            case 'prediction':
+                if (typeof Prediction !== 'undefined') {
+                    Prediction.checkApiStatus();
+                }
+                break;
+
+            case 'records':
+                if (typeof Records !== 'undefined') {
+                    Records.loadRecords();
+                }
+                break;
+
+            case 'bankroll':
+                if (typeof Bankroll !== 'undefined') {
+                    Bankroll.updateDisplay();
+                    Bankroll.renderChart();
+                }
+                break;
+
+            case 'arbitrage':
+                // 套利计算器不需要刷新
+                break;
+
+            case 'hedge':
+                // 对冲计算器不需要刷新
+                break;
+
+            case 'kelly':
+                // 凯利公式不需要刷新
+                break;
+
+            case 'valuebet':
+                // 价值投注不需要刷新
+                break;
+
+            case 'apiconfig':
+                if (typeof ApiConfig !== 'undefined') {
+                    ApiConfig.loadConfig();
+                }
+                break;
         }
     },
 

@@ -132,6 +132,11 @@ const Records = {
             Utils.showToast('记录已添加', 'success');
         }
 
+        // 更新资金余额
+        if (result === 'win' || result === 'lose') {
+            Bankroll.updateAfterBet(pnl, result, match);
+        }
+
         this.closeModal();
         this.loadRecords();
         this.updateDashboard();
