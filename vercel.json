@@ -3,11 +3,7 @@
   "builds": [
     {
       "src": "api/proxy.js",
-      "functions": {
-        "api/**": {
-          "runtime": "@vercel/node"
-        }
-      }
+      "use": "@vercel/node"
     }
   ],
   "routes": [
@@ -16,8 +12,13 @@
       "dest": "/api/$1"
     },
     {
-      "src": "/(.*)",
+      "src": "/(.*\\.(css|js|json|png|jpg|gif|svg|ico|woff|woff2|ttf|eot))",
       "dest": "/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
     }
-  ]
+  ],
+  "outputDirectory": "."
 }
