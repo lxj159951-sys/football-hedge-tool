@@ -52,14 +52,134 @@
                 <i class="fas fa-cog"></i>
                 <span>API 配置</span>
             </li>
+            <li class="nav-divider">对冲工具</li>
+            <li data-tab="twoOneCalc">
+                <i class="fas fa-link"></i>
+                <span>2串1计算</span>
+            </li>
+            <li data-tab="singleCalc">
+                <i class="fas fa-bullseye"></i>
+                <span>单关计算</span>
+            </li>
+            <li data-tab="goalsCalc">
+                <i class="fas fa-futbol"></i>
+                <span>进球数计算</span>
+            </li>
+            <li data-tab="halfFullCalc">
+                <i class="fas fa-clock"></i>
+                <span>半全场计算</span>
+            </li>
+            <li data-tab="fullCoverCalc">
+                <i class="fas fa-layer-group"></i>
+                <span>全包计算</span>
+            </li>
+            <li class="nav-divider">篮球</li>
+            <li data-tab="bkTwoOne">
+                <i class="fas fa-basketball-ball"></i>
+                <span>篮球串关</span>
+            </li>
+            <li data-tab="bkSingle">
+                <i class="fas fa-basketball-ball"></i>
+                <span>篮球单关</span>
+            </li>
+            <li class="nav-divider">其他</li>
+            <li data-tab="hedgeHistory">
+                <i class="fas fa-history"></i>
+                <span>历史方案</span>
+            </li>
+            <li data-tab="scores">
+                <i class="fas fa-tv"></i>
+                <span>实时比分</span>
+            </li>
+            <li data-tab="hedgeSettings">
+                <i class="fas fa-sliders-h"></i>
+                <span>对冲配置</span>
+            </li>
         </ul>
         <div class="sidebar-footer">
+            <!-- 用户信息区域 -->
+            <div class="user-info-section" id="userInfoSection">
+                <button class="btn btn-primary btn-sm" id="loginBtn">
+                    <i class="fas fa-sign-in-alt"></i> 登录
+                </button>
+            </div>
             <div class="api-status" id="apiStatus">
                 <span class="status-dot offline"></span>
                 <span>API 未连接</span>
             </div>
         </div>
     </nav>
+
+    <!-- 登录/注册弹窗 -->
+    <div class="modal-overlay" id="authModal" style="display: none;">
+        <div class="modal auth-modal">
+            <div class="modal-header">
+                <h3><i class="fas fa-user-circle"></i> 用户中心</h3>
+                <button class="btn-icon" id="closeAuthModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- 登录表单 -->
+                <div id="loginForm">
+                    <div class="auth-form-header">
+                        <h4>账号登录</h4>
+                        <p>登录后可同步配置和历史方案</p>
+                    </div>
+                    <div class="form-group">
+                        <label for="loginUsername">
+                            <i class="fas fa-user"></i> 账号
+                        </label>
+                        <input type="text" id="loginUsername" placeholder="请输入账号" autocomplete="username">
+                    </div>
+                    <div class="form-group">
+                        <label for="loginPassword">
+                            <i class="fas fa-lock"></i> 密码
+                        </label>
+                        <input type="password" id="loginPassword" placeholder="请输入密码" autocomplete="current-password">
+                    </div>
+                    <button class="btn btn-primary btn-block" id="loginSubmit">
+                        <i class="fas fa-sign-in-alt"></i> 立即登录
+                    </button>
+                    <div class="auth-switch">
+                        还没有账号？<a href="javascript:void(0)" id="switchToRegister">立即注册</a>
+                    </div>
+                </div>
+
+                <!-- 注册表单 -->
+                <div id="registerForm" style="display: none;">
+                    <div class="auth-form-header">
+                        <h4>账号注册</h4>
+                        <p>注册新账号开始使用</p>
+                    </div>
+                    <div class="form-group">
+                        <label for="registerUsername">
+                            <i class="fas fa-user"></i> 账号
+                        </label>
+                        <input type="text" id="registerUsername" placeholder="请输入账号" autocomplete="username">
+                    </div>
+                    <div class="form-group">
+                        <label for="registerPassword">
+                            <i class="fas fa-lock"></i> 密码
+                        </label>
+                        <input type="password" id="registerPassword" placeholder="请输入密码（至少6位）" autocomplete="new-password">
+                    </div>
+                    <div class="form-group">
+                        <label for="registerConfirmPassword">
+                            <i class="fas fa-lock"></i> 确认密码
+                        </label>
+                        <input type="password" id="registerConfirmPassword" placeholder="请再次输入密码" autocomplete="new-password">
+                    </div>
+                    <button class="btn btn-primary btn-block" id="registerSubmit">
+                        <i class="fas fa-user-plus"></i> 立即注册
+                    </button>
+                    <div class="auth-switch">
+                        已有账号？<a href="javascript:void(0)" id="switchToLogin">立即登录</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- 主内容区 -->
     <main class="content">
@@ -779,6 +899,623 @@
                 <p>配置 API 后，智能预测、球队查询等功能将自动获取真实数据。</p>
             </div>
         </section>
+
+        <!-- 2串1计算 -->
+        <section class="tab-content" id="twoOneCalc">
+            <h2>2串1计算</h2>
+            <p class="section-desc">两场比赛串关对冲计算工具</p>
+
+            <div class="calculator-card">
+                <div class="card-header">
+                    <h3><i class="fas fa-link"></i> 比赛信息</h3>
+                </div>
+                <div class="card-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>比赛1 - 主队</label>
+                            <input type="text" id="twoOneTeam1" placeholder="主队名称">
+                        </div>
+                        <div class="form-group">
+                            <label>比赛1 - 赔率</label>
+                            <input type="number" id="twoOneOdds1" placeholder="1.80" step="0.01" min="1">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>比赛2 - 主队</label>
+                            <input type="text" id="twoOneTeam2" placeholder="主队名称">
+                        </div>
+                        <div class="form-group">
+                            <label>比赛2 - 赔率</label>
+                            <input type="number" id="twoOneOdds2" placeholder="2.00" step="0.01" min="1">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>投注金额 (元)</label>
+                            <input type="number" id="twoOneStake" placeholder="100" min="1">
+                        </div>
+                        <div class="form-group">
+                            <label>竞彩返点 (%)</label>
+                            <input type="number" id="twoOneCF" placeholder="14" min="0" max="100" value="14">
+                        </div>
+                    </div>
+                    <button class="btn btn-primary btn-block" id="calculateTwoOne">
+                        <i class="fas fa-calculator"></i> 计算
+                    </button>
+                </div>
+            </div>
+
+            <div class="result-card" id="twoOneResult" style="display: none;">
+                <div class="result-header">
+                    <h3><i class="fas fa-chart-bar"></i> 计算结果</h3>
+                </div>
+                <div class="result-body" id="twoOneResultBody"></div>
+            </div>
+
+            <div class="info-card">
+                <h4><i class="fas fa-info-circle"></i> 说明</h4>
+                <p>2串1是将两场比赛的赔率相乘，获得更高回报的投注方式。计算结果包含预期收益、风险评估和对冲建议。</p>
+            </div>
+        </section>
+
+        <!-- 单关计算 -->
+        <section class="tab-content" id="singleCalc">
+            <h2>单关计算</h2>
+            <p class="section-desc">单场比赛对冲计算工具</p>
+
+            <div class="calculator-card">
+                <div class="card-header">
+                    <h3><i class="fas fa-bullseye"></i> 比赛信息</h3>
+                </div>
+                <div class="card-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>比赛名称</label>
+                            <input type="text" id="singleMatch" placeholder="主队 vs 客队">
+                        </div>
+                        <div class="form-group">
+                            <label>投注赔率</label>
+                            <input type="number" id="singleOdds" placeholder="1.80" step="0.01" min="1">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>投注金额 (元)</label>
+                            <input type="number" id="singleStake" placeholder="100" min="1">
+                        </div>
+                        <div class="form-group">
+                            <label>竞彩返点 (%)</label>
+                            <input type="number" id="singleCF" placeholder="12" min="0" max="100" value="12">
+                        </div>
+                    </div>
+                    <button class="btn btn-primary btn-block" id="calculateSingle">
+                        <i class="fas fa-calculator"></i> 计算
+                    </button>
+                </div>
+            </div>
+
+            <div class="result-card" id="singleResult" style="display: none;">
+                <div class="result-header">
+                    <h3><i class="fas fa-chart-bar"></i> 计算结果</h3>
+                </div>
+                <div class="result-body" id="singleResultBody"></div>
+            </div>
+
+            <div class="info-card">
+                <h4><i class="fas fa-info-circle"></i> 说明</h4>
+                <p>单关是最基本的投注方式，计算单场比赛的预期收益和风险。</p>
+            </div>
+        </section>
+
+        <!-- 进球数计算 -->
+        <section class="tab-content" id="goalsCalc">
+            <h2>进球数计算</h2>
+            <p class="section-desc">进球数盘口对冲计算工具</p>
+
+            <div class="calculator-card">
+                <div class="card-header">
+                    <h3><i class="fas fa-futbol"></i> 比赛信息</h3>
+                </div>
+                <div class="card-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>比赛名称</label>
+                            <input type="text" id="goalsMatch" placeholder="主队 vs 客队">
+                        </div>
+                        <div class="form-group">
+                            <label>盘口 (大小球)</label>
+                            <select id="goalsLine">
+                                <option value="1.5">1.5球</option>
+                                <option value="2.5" selected>2.5球</option>
+                                <option value="3.5">3.5球</option>
+                                <option value="4.5">4.5球</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>大球赔率</label>
+                            <input type="number" id="goalsOverOdds" placeholder="1.90" step="0.01" min="1">
+                        </div>
+                        <div class="form-group">
+                            <label>小球赔率</label>
+                            <input type="number" id="goalsUnderOdds" placeholder="1.90" step="0.01" min="1">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>投注金额 (元)</label>
+                            <input type="number" id="goalsStake" placeholder="100" min="1">
+                        </div>
+                        <div class="form-group">
+                            <label>竞彩返点 (%)</label>
+                            <input type="number" id="goalsCF" placeholder="12" min="0" max="100" value="12">
+                        </div>
+                    </div>
+                    <button class="btn btn-primary btn-block" id="calculateGoals">
+                        <i class="fas fa-calculator"></i> 计算
+                    </button>
+                </div>
+            </div>
+
+            <div class="result-card" id="goalsResult" style="display: none;">
+                <div class="result-header">
+                    <h3><i class="fas fa-chart-bar"></i> 计算结果</h3>
+                </div>
+                <div class="result-body" id="goalsResultBody"></div>
+            </div>
+
+            <div class="info-card">
+                <h4><i class="fas fa-info-circle"></i> 说明</h4>
+                <p>进球数（大小球）是预测比赛总进球数是否超过盘口值的投注方式。</p>
+            </div>
+        </section>
+
+        <!-- 半全场计算 -->
+        <section class="tab-content" id="halfFullCalc">
+            <h2>半全场计算</h2>
+            <p class="section-desc">半全场胜负对冲计算工具</p>
+
+            <div class="calculator-card">
+                <div class="card-header">
+                    <h3><i class="fas fa-clock"></i> 比赛信息</h3>
+                </div>
+                <div class="card-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>比赛名称</label>
+                            <input type="text" id="halfFullMatch" placeholder="主队 vs 客队">
+                        </div>
+                        <div class="form-group">
+                            <label>半全场结果</label>
+                            <select id="halfFullSelection">
+                                <option value="1-1">主/主</option>
+                                <option value="1-X">主/平</option>
+                                <option value="1-2">主/客</option>
+                                <option value="X-1">平/主</option>
+                                <option value="X-X">平/平</option>
+                                <option value="X-2">平/客</option>
+                                <option value="2-1">客/主</option>
+                                <option value="2-X">客/平</option>
+                                <option value="2-2">客/客</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>投注赔率</label>
+                            <input type="number" id="halfFullOdds" placeholder="4.50" step="0.01" min="1">
+                        </div>
+                        <div class="form-group">
+                            <label>投注金额 (元)</label>
+                            <input type="number" id="halfFullStake" placeholder="100" min="1">
+                        </div>
+                    </div>
+                    <button class="btn btn-primary btn-block" id="calculateHalfFull">
+                        <i class="fas fa-calculator"></i> 计算
+                    </button>
+                </div>
+            </div>
+
+            <div class="result-card" id="halfFullResult" style="display: none;">
+                <div class="result-header">
+                    <h3><i class="fas fa-chart-bar"></i> 计算结果</h3>
+                </div>
+                <div class="result-body" id="halfFullResultBody"></div>
+            </div>
+
+            <div class="info-card">
+                <h4><i class="fas fa-info-circle"></i> 说明</h4>
+                <p>半全场是预测上半场和全场比赛结果的投注方式，赔率较高但难度也大。</p>
+            </div>
+        </section>
+
+        <!-- 全包计算 -->
+        <section class="tab-content" id="fullCoverCalc">
+            <h2>全包计算</h2>
+            <p class="section-desc">全包方案对冲计算工具</p>
+
+            <div class="calculator-card">
+                <div class="card-header">
+                    <h3><i class="fas fa-layer-group"></i> 比赛信息</h3>
+                </div>
+                <div class="card-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>比赛名称</label>
+                            <input type="text" id="fullCoverMatch" placeholder="主队 vs 客队">
+                        </div>
+                        <div class="form-group">
+                            <label>投注类型</label>
+                            <select id="fullCoverType">
+                                <option value="had">胜平负</option>
+                                <option value="ttg">进球数</option>
+                                <option value="crs">比分</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>主胜赔率</label>
+                            <input type="number" id="fullCoverOdds1" placeholder="2.50" step="0.01" min="1">
+                        </div>
+                        <div class="form-group">
+                            <label>平局赔率</label>
+                            <input type="number" id="fullCoverOddsX" placeholder="3.20" step="0.01" min="1">
+                        </div>
+                        <div class="form-group">
+                            <label>客胜赔率</label>
+                            <input type="number" id="fullCoverOdds2" placeholder="2.80" step="0.01" min="1">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>总投注金额 (元)</label>
+                            <input type="number" id="fullCoverStake" placeholder="1000" min="1">
+                        </div>
+                        <div class="form-group">
+                            <label>竞彩返点 (%)</label>
+                            <input type="number" id="fullCoverCF" placeholder="14" min="0" max="100" value="14">
+                        </div>
+                    </div>
+                    <button class="btn btn-primary btn-block" id="calculateFullCover">
+                        <i class="fas fa-calculator"></i> 计算
+                    </button>
+                </div>
+            </div>
+
+            <div class="result-card" id="fullCoverResult" style="display: none;">
+                <div class="result-header">
+                    <h3><i class="fas fa-chart-bar"></i> 计算结果</h3>
+                </div>
+                <div class="result-body" id="fullCoverResultBody"></div>
+            </div>
+
+            <div class="info-card">
+                <h4><i class="fas fa-info-circle"></i> 说明</h4>
+                <p>全包是覆盖所有可能结果的投注方式，通过合理分配资金确保无论结果如何都能获得收益。</p>
+            </div>
+        </section>
+
+        <!-- 篮球串关 -->
+        <section class="tab-content" id="bkTwoOne">
+            <h2>篮球串关</h2>
+            <p class="section-desc">篮球两场比赛串关计算工具</p>
+
+            <div class="calculator-card">
+                <div class="card-header">
+                    <h3><i class="fas fa-basketball-ball"></i> 比赛信息</h3>
+                </div>
+                <div class="card-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>比赛1 - 主队</label>
+                            <input type="text" id="bkTwoOneTeam1" placeholder="主队名称">
+                        </div>
+                        <div class="form-group">
+                            <label>比赛1 - 赔率</label>
+                            <input type="number" id="bkTwoOneOdds1" placeholder="1.80" step="0.01" min="1">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>比赛2 - 主队</label>
+                            <input type="text" id="bkTwoOneTeam2" placeholder="主队名称">
+                        </div>
+                        <div class="form-group">
+                            <label>比赛2 - 赔率</label>
+                            <input type="number" id="bkTwoOneOdds2" placeholder="2.00" step="0.01" min="1">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>投注金额 (元)</label>
+                            <input type="number" id="bkTwoOneStake" placeholder="100" min="1">
+                        </div>
+                        <div class="form-group">
+                            <label>竞彩返点 (%)</label>
+                            <input type="number" id="bkTwoOneCF" placeholder="26" min="0" max="100" value="26">
+                        </div>
+                    </div>
+                    <button class="btn btn-primary btn-block" id="calculateBkTwoOne">
+                        <i class="fas fa-calculator"></i> 计算
+                    </button>
+                </div>
+            </div>
+
+            <div class="result-card" id="bkTwoOneResult" style="display: none;">
+                <div class="result-header">
+                    <h3><i class="fas fa-chart-bar"></i> 计算结果</h3>
+                </div>
+                <div class="result-body" id="bkTwoOneResultBody"></div>
+            </div>
+
+            <div class="info-card">
+                <h4><i class="fas fa-info-circle"></i> 说明</h4>
+                <p>篮球串关与足球类似，将两场篮球比赛的赔率相乘获得更高回报。</p>
+            </div>
+        </section>
+
+        <!-- 篮球单关 -->
+        <section class="tab-content" id="bkSingle">
+            <h2>篮球单关</h2>
+            <p class="section-desc">篮球单场比赛对冲计算工具</p>
+
+            <div class="calculator-card">
+                <div class="card-header">
+                    <h3><i class="fas fa-basketball-ball"></i> 比赛信息</h3>
+                </div>
+                <div class="card-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>比赛名称</label>
+                            <input type="text" id="bkSingleMatch" placeholder="主队 vs 客队">
+                        </div>
+                        <div class="form-group">
+                            <label>投注赔率</label>
+                            <input type="number" id="bkSingleOdds" placeholder="1.80" step="0.01" min="1">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>投注金额 (元)</label>
+                            <input type="number" id="bkSingleStake" placeholder="100" min="1">
+                        </div>
+                        <div class="form-group">
+                            <label>竞彩返点 (%)</label>
+                            <input type="number" id="bkSingleCF" placeholder="25" min="0" max="100" value="25">
+                        </div>
+                    </div>
+                    <button class="btn btn-primary btn-block" id="calculateBkSingle">
+                        <i class="fas fa-calculator"></i> 计算
+                    </button>
+                </div>
+            </div>
+
+            <div class="result-card" id="bkSingleResult" style="display: none;">
+                <div class="result-header">
+                    <h3><i class="fas fa-chart-bar"></i> 计算结果</h3>
+                </div>
+                <div class="result-body" id="bkSingleResultBody"></div>
+            </div>
+
+            <div class="info-card">
+                <h4><i class="fas fa-info-circle"></i> 说明</h4>
+                <p>篮球单关是最基本的篮球投注方式，计算单场比赛的预期收益和风险。</p>
+            </div>
+        </section>
+
+        <!-- 历史方案 -->
+        <section class="tab-content" id="hedgeHistory">
+            <h2>历史方案</h2>
+            <p class="section-desc">查看和管理历史对冲方案</p>
+
+            <div class="plans-toolbar">
+                <div class="plans-filter">
+                    <select id="plansFilter">
+                        <option value="all">全部方案</option>
+                        <option value="twoOne">2串1</option>
+                        <option value="single">单关</option>
+                        <option value="goals">进球数</option>
+                        <option value="halfFull">半全场</option>
+                        <option value="fullCover">全包</option>
+                    </select>
+                </div>
+                <button class="btn btn-danger btn-sm" id="clearAllPlans">
+                    <i class="fas fa-trash"></i> 清空所有
+                </button>
+            </div>
+
+            <div id="hedgePlansList" class="plans-list">
+                <div class="empty-state">
+                    <i class="fas fa-inbox"></i>
+                    <p>暂无历史方案</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 实时比分 -->
+        <section class="tab-content" id="scores">
+            <h2>实时比分</h2>
+            <p class="section-desc">查看实时比赛比分和数据</p>
+
+            <div class="scores-toolbar">
+                <div class="scores-filter">
+                    <button class="btn btn-sm btn-primary active" data-filter="all">全部</button>
+                    <button class="btn btn-sm btn-secondary" data-filter="live">进行中</button>
+                    <button class="btn btn-sm btn-secondary" data-filter="upcoming">未开始</button>
+                    <button class="btn btn-sm btn-secondary" data-filter="finished">已结束</button>
+                </div>
+                <button class="btn btn-secondary btn-sm" id="refreshScores">
+                    <i class="fas fa-sync-alt"></i> 刷新
+                </button>
+            </div>
+
+            <div id="scoresContainer" class="scores-container">
+                <div class="empty-state">
+                    <i class="fas fa-tv"></i>
+                    <p>请先配置 API 连接以获取实时比分</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 对冲配置 -->
+        <section class="tab-content" id="hedgeSettings">
+            <h2>对冲配置</h2>
+            <p class="section-desc">配置竞彩返点、皇冠水位等参数</p>
+
+            <div class="calculator-card">
+                <div class="card-header">
+                    <h3><i class="fas fa-futbol"></i> 足球配置</h3>
+                </div>
+                <div class="card-body">
+                    <div class="config-section">
+                        <h4>2串1</h4>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>竞彩返点 (%)</label>
+                                <input type="number" id="configFtTwoOneCF" value="14" min="0" max="100">
+                            </div>
+                            <div class="form-group">
+                                <label>皇冠水位</label>
+                                <input type="number" id="configFtTwoOneWF" value="2.0" step="0.1" min="0">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="config-section">
+                        <h4>单关</h4>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>竞彩返点 (%)</label>
+                                <input type="number" id="configFtSingleCF" value="12" min="0" max="100">
+                            </div>
+                            <div class="form-group">
+                                <label>皇冠水位</label>
+                                <input type="number" id="configFtSingleWF" value="2.0" step="0.1" min="0">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="config-section">
+                        <h4>进球数</h4>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>竞彩返点 (%)</label>
+                                <input type="number" id="configFtGoalsCF" value="12" min="0" max="100">
+                            </div>
+                            <div class="form-group">
+                                <label>皇冠水位</label>
+                                <input type="number" id="configFtGoalsWF" value="2.0" step="0.1" min="0">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="config-section">
+                        <h4>半全场</h4>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>竞彩返点 (%)</label>
+                                <input type="number" id="configFtHalfFullCF" value="12" min="0" max="100">
+                            </div>
+                            <div class="form-group">
+                                <label>皇冠水位</label>
+                                <input type="number" id="configFtHalfFullWF" value="2.0" step="0.1" min="0">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="config-section">
+                        <h4>全包</h4>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>竞彩返点 (%)</label>
+                                <input type="number" id="configFtFullCoverCF" value="14" min="0" max="100">
+                            </div>
+                            <div class="form-group">
+                                <label>竞彩返点2 (%)</label>
+                                <input type="number" id="configFtFullCoverCF2" value="14" min="0" max="100">
+                            </div>
+                            <div class="form-group">
+                                <label>皇冠水位</label>
+                                <input type="number" id="configFtFullCoverWF" value="2.0" step="0.1" min="0">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="calculator-card">
+                <div class="card-header">
+                    <h3><i class="fas fa-basketball-ball"></i> 篮球配置</h3>
+                </div>
+                <div class="card-body">
+                    <div class="config-section">
+                        <h4>串关</h4>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>竞彩返点 (%)</label>
+                                <input type="number" id="configBkTwoOneCF" value="26" min="0" max="100">
+                            </div>
+                            <div class="form-group">
+                                <label>皇冠水位</label>
+                                <input type="number" id="configBkTwoOneWF" value="1.2" step="0.1" min="0">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="config-section">
+                        <h4>单关</h4>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>竞彩返点 (%)</label>
+                                <input type="number" id="configBkSingleCF" value="25" min="0" max="100">
+                            </div>
+                            <div class="form-group">
+                                <label>皇冠水位</label>
+                                <input type="number" id="configBkSingleWF" value="1.2" step="0.1" min="0">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="calculator-card">
+                <div class="card-header">
+                    <h3><i class="fas fa-cog"></i> 通用设置</h3>
+                </div>
+                <div class="card-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>声音提示</label>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="configSound" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label>自动刷新间隔 (秒)</label>
+                            <input type="number" id="configInterval" value="10" min="5" max="60">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>最小赔率</label>
+                            <input type="number" id="configMinRate" value="0" step="0.01" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label>最大倍数</label>
+                            <input type="number" id="configMaxMultiple" value="10" min="1" max="100">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button class="btn btn-primary btn-block" id="saveHedgeConfig">
+                    <i class="fas fa-save"></i> 保存配置
+                </button>
+                <button class="btn btn-secondary btn-block" id="resetHedgeConfig">
+                    <i class="fas fa-undo"></i> 恢复默认
+                </button>
+            </div>
+        </section>
     </main>
 
     <!-- 提示框 -->
@@ -796,6 +1533,17 @@
     <script src="js/bankroll.js"></script>
     <script src="js/apiconfig.js"></script>
     <script src="js/matches.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/hedge-config.js"></script>
+    <script src="js/hedge-history.js"></script>
+    <script src="js/twoone.js"></script>
+    <script src="js/single.js"></script>
+    <script src="js/goals.js"></script>
+    <script src="js/halffull.js"></script>
+    <script src="js/fullcover.js"></script>
+    <script src="js/bk-twoone.js"></script>
+    <script src="js/bk-single.js"></script>
+    <script src="js/scores.js"></script>
     <script src="js/app.js"></script>
 
     <!-- Vercel Analytics -->

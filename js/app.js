@@ -13,6 +13,19 @@ const App = {
         ApiConfig.init();
         Matches.init();
 
+        // Initialize new modules
+        Auth.init();
+        HedgeConfig.init();
+        HedgeHistory.init();
+        TwoOne.init();
+        Single.init();
+        Goals.init();
+        HalfFull.init();
+        FullCover.init();
+        BkTwoOne.init();
+        BkSingle.init();
+        Scores.init();
+
         // Setup navigation
         this.setupNavigation();
 
@@ -48,12 +61,14 @@ const App = {
     },
 
     setupNavigation() {
-        const navLinks = document.querySelectorAll('.nav-links li');
+        const navLinks = document.querySelectorAll('.nav-links li[data-tab]');
 
         navLinks.forEach(link => {
             link.addEventListener('click', () => {
                 const tabId = link.dataset.tab;
-                this.switchTab(tabId);
+                if (tabId) {
+                    this.switchTab(tabId);
+                }
             });
         });
     },
@@ -121,6 +136,36 @@ const App = {
             case 'apiconfig':
                 if (typeof ApiConfig !== 'undefined') {
                     ApiConfig.loadConfig();
+                }
+                break;
+
+            case 'twoOneCalc':
+            case 'singleCalc':
+            case 'goalsCalc':
+            case 'halfFullCalc':
+            case 'fullCoverCalc':
+            case 'bkTwoOne':
+            case 'bkSingle':
+                // 对冲计算页面不需要特殊处理
+                break;
+
+            case 'hedgeHistory':
+                if (typeof HedgeHistory !== 'undefined') {
+                    HedgeHistory.loadPlans();
+                    HedgeHistory.renderPlans();
+                }
+                break;
+
+            case 'scores':
+                if (typeof Scores !== 'undefined') {
+                    Scores.loadScores();
+                }
+                break;
+
+            case 'hedgeSettings':
+                if (typeof HedgeConfig !== 'undefined') {
+                    HedgeConfig.loadConfig();
+                    HedgeConfig.loadConfigToForm();
                 }
                 break;
         }
