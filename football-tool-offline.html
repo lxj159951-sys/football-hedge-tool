@@ -456,6 +456,163 @@
             .strategy-options { grid-template-columns: 1fr; }
             .records-stats { grid-template-columns: repeat(2, 1fr); }
             .prediction-summary { grid-template-columns: 1fr; }
+            .charts-grid { grid-template-columns: 1fr; }
+        }
+
+        /* ===== Charts ===== */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-top: 24px;
+        }
+
+        .chart-card {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            padding: 20px;
+        }
+
+        .chart-card h3 {
+            font-size: 16px;
+            margin-bottom: 16px;
+            color: var(--text-primary);
+        }
+
+        /* Pie Chart */
+        .pie-chart-container {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .pie-chart {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            position: relative;
+            background: conic-gradient(
+                var(--success) 0% 50%,
+                var(--danger) 50% 80%,
+                var(--warning) 80% 100%
+            );
+        }
+
+        .pie-center {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 70px; height: 70px;
+            background: var(--bg-card);
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .pie-center span {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .pie-center small {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .pie-legend {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+        }
+
+        /* Bar Chart */
+        .bar-chart-container {
+            height: 150px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .bar-chart {
+            flex: 1;
+            display: flex;
+            align-items: flex-end;
+            gap: 4px;
+            padding: 0 4px;
+        }
+
+        .bar {
+            flex: 1;
+            min-width: 20px;
+            border-radius: 4px 4px 0 0;
+            transition: height 0.3s;
+            position: relative;
+        }
+
+        .bar.positive {
+            background: linear-gradient(to top, var(--success), rgba(67, 233, 123, 0.5));
+        }
+
+        .bar.negative {
+            background: linear-gradient(to bottom, var(--danger), rgba(245, 87, 108, 0.5));
+            align-self: flex-start;
+        }
+
+        .bar-chart-labels {
+            display: flex;
+            gap: 4px;
+            padding: 4px 4px 0;
+        }
+
+        .bar-label {
+            flex: 1;
+            text-align: center;
+            font-size: 10px;
+            color: var(--text-muted);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .chart-summary {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border);
+        }
+
+        .chart-stat {
+            text-align: center;
+        }
+
+        .chart-stat .label {
+            display: block;
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .chart-stat .value {
+            font-size: 16px;
+            font-weight: 700;
         }
     </style>
 </head>
@@ -541,6 +698,59 @@
                     <div class="stat-info">
                         <h3>投注次数</h3>
                         <p class="stat-value" id="totalBets">0</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 图表区域 -->
+            <div class="charts-grid">
+                <!-- 胜率饼图 -->
+                <div class="chart-card">
+                    <h3>胜率分布</h3>
+                    <div class="pie-chart-container">
+                        <div class="pie-chart" id="winRateChart">
+                            <div class="pie-center">
+                                <span id="winRatePercent">0%</span>
+                                <small>胜率</small>
+                            </div>
+                        </div>
+                        <div class="pie-legend">
+                            <div class="legend-item">
+                                <span class="legend-color" style="background: var(--success);"></span>
+                                <span>赢 <span id="winCount">0</span></span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-color" style="background: var(--danger);"></span>
+                                <span>输 <span id="loseCount">0</span></span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-color" style="background: var(--warning);"></span>
+                                <span>待结算 <span id="pendingCount">0</span></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 盈亏趋势 -->
+                <div class="chart-card">
+                    <h3>盈亏趋势</h3>
+                    <div class="bar-chart-container">
+                        <div class="bar-chart" id="pnlChart">
+                            <!-- 由 JavaScript 动态生成 -->
+                        </div>
+                        <div class="bar-chart-labels" id="pnlChartLabels">
+                            <!-- 由 JavaScript 动态生成 -->
+                        </div>
+                    </div>
+                    <div class="chart-summary">
+                        <div class="chart-stat">
+                            <span class="label">最高盈利</span>
+                            <span class="value positive" id="maxProfit">¥0</span>
+                        </div>
+                        <div class="chart-stat">
+                            <span class="label">最大亏损</span>
+                            <span class="value negative" id="maxLoss">¥0</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1098,8 +1308,84 @@
             const bankroll = Store.getBankroll();
             document.getElementById('totalBankroll').textContent = Utils.formatCurrency(bankroll.current);
             document.getElementById('totalPnl').textContent = Utils.formatCurrency(stats.totalPnl);
+            document.getElementById('totalPnl').className = `stat-value ${stats.totalPnl >= 0 ? 'positive' : 'negative'}`;
             document.getElementById('winRate').textContent = Utils.formatPercent(stats.winRate);
             document.getElementById('totalBets').textContent = stats.totalBets;
+            this.renderCharts(stats);
+        },
+        renderCharts(stats) {
+            // 渲染胜率饼图
+            this.renderPieChart(stats);
+            // 渲染盈亏柱状图
+            this.renderBarChart();
+        },
+        renderPieChart(stats) {
+            const total = stats.wins + stats.losses;
+            const winPercent = total > 0 ? (stats.wins / total) * 100 : 0;
+            const losePercent = total > 0 ? (stats.losses / total) * 100 : 0;
+            const pendingCount = stats.totalBets - total;
+
+            // 更新饼图
+            const pieChart = document.getElementById('winRateChart');
+            if (total > 0) {
+                pieChart.style.background = `conic-gradient(
+                    var(--success) 0% ${winPercent}%,
+                    var(--danger) ${winPercent}% ${winPercent + losePercent}%,
+                    var(--warning) ${winPercent + losePercent}% 100%
+                )`;
+            } else {
+                pieChart.style.background = 'var(--bg-hover)';
+            }
+
+            // 更新数字
+            document.getElementById('winRatePercent').textContent = Utils.formatPercent(winPercent);
+            document.getElementById('winCount').textContent = stats.wins;
+            document.getElementById('loseCount').textContent = stats.losses;
+            document.getElementById('pendingCount').textContent = pendingCount;
+        },
+        renderBarChart() {
+            const records = Store.getRecords();
+            const settled = records.filter(r => r.result === 'win' || r.result === 'lose').reverse().slice(-10);
+
+            const barChart = document.getElementById('pnlChart');
+            const labelsContainer = document.getElementById('pnlChartLabels');
+
+            if (settled.length === 0) {
+                barChart.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 40px;">暂无数据</div>';
+                labelsContainer.innerHTML = '';
+                document.getElementById('maxProfit').textContent = '¥0';
+                document.getElementById('maxLoss').textContent = '¥0';
+                return;
+            }
+
+            // 计算累计盈亏
+            let cumulativePnl = 0;
+            const pnlData = settled.map(r => {
+                cumulativePnl += r.pnl || 0;
+                return { date: r.date, pnl: cumulativePnl };
+            });
+
+            // 找出最大值和最小值
+            const maxPnl = Math.max(...pnlData.map(d => d.pnl));
+            const minPnl = Math.min(...pnlData.map(d => d.pnl));
+            const maxAbs = Math.max(Math.abs(maxPnl), Math.abs(minPnl), 1);
+
+            // 渲染柱状图
+            barChart.innerHTML = pnlData.map(d => {
+                const height = Math.abs(d.pnl) / maxAbs * 60;
+                const isPositive = d.pnl >= 0;
+                return `<div class="bar ${isPositive ? 'positive' : 'negative'}" style="height: ${height}px;" title="${Utils.formatCurrency(d.pnl)}"></div>`;
+            }).join('');
+
+            // 渲染标签
+            labelsContainer.innerHTML = pnlData.map(d => {
+                const date = new Date(d.date);
+                return `<div class="bar-label">${date.getMonth() + 1}/${date.getDate()}</div>`;
+            }).join('');
+
+            // 更新最大值
+            document.getElementById('maxProfit').textContent = Utils.formatCurrency(maxPnl);
+            document.getElementById('maxLoss').textContent = Utils.formatCurrency(minPnl);
         }
     };
 
