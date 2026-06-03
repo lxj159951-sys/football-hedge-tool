@@ -16,54 +16,47 @@ const Auth = {
     },
 
     bindEvents() {
-        // 登录按钮
-        const loginBtn = document.getElementById('loginBtn');
-        if (loginBtn) {
-            loginBtn.addEventListener('click', () => this.showLoginModal());
-        }
+        // 使用事件委托，避免重复绑定问题
+        document.addEventListener('click', (e) => {
+            // 登录按钮
+            if (e.target.id === 'loginBtn' || e.target.closest('#loginBtn')) {
+                this.showLoginModal();
+            }
 
-        // 退出按钮
-        const logoutBtn = document.getElementById('logoutBtn');
-        if (logoutBtn) {
-            logoutBtn.addEventListener('click', () => this.logout());
-        }
+            // 退出按钮
+            if (e.target.id === 'logoutBtn' || e.target.closest('#logoutBtn')) {
+                this.logout();
+            }
 
-        // 登录表单提交
-        const loginSubmit = document.getElementById('loginSubmit');
-        if (loginSubmit) {
-            loginSubmit.addEventListener('click', () => this.handleLogin());
-        }
+            // 登录表单提交
+            if (e.target.id === 'loginSubmit' || e.target.closest('#loginSubmit')) {
+                this.handleLogin();
+            }
 
-        // 注册表单提交
-        const registerSubmit = document.getElementById('registerSubmit');
-        if (registerSubmit) {
-            registerSubmit.addEventListener('click', () => this.handleRegister());
-        }
+            // 注册表单提交
+            if (e.target.id === 'registerSubmit' || e.target.closest('#registerSubmit')) {
+                this.handleRegister();
+            }
 
-        // 切换登录/注册
-        const switchToRegister = document.getElementById('switchToRegister');
-        if (switchToRegister) {
-            switchToRegister.addEventListener('click', () => this.switchForm('register'));
-        }
+            // 切换登录/注册
+            if (e.target.id === 'switchToRegister' || e.target.closest('#switchToRegister')) {
+                this.switchForm('register');
+            }
 
-        const switchToLogin = document.getElementById('switchToLogin');
-        if (switchToLogin) {
-            switchToLogin.addEventListener('click', () => this.switchForm('login'));
-        }
+            if (e.target.id === 'switchToLogin' || e.target.closest('#switchToLogin')) {
+                this.switchForm('login');
+            }
 
-        // 关闭弹窗
-        const closeModal = document.getElementById('closeAuthModal');
-        if (closeModal) {
-            closeModal.addEventListener('click', () => this.hideLoginModal());
-        }
+            // 关闭弹窗
+            if (e.target.id === 'closeAuthModal' || e.target.closest('#closeAuthModal')) {
+                this.hideLoginModal();
+            }
 
-        // 点击遮罩关闭
-        const authModal = document.getElementById('authModal');
-        if (authModal) {
-            authModal.addEventListener('click', (e) => {
-                if (e.target === authModal) this.hideLoginModal();
-            });
-        }
+            // 点击遮罩关闭
+            if (e.target.id === 'authModal') {
+                this.hideLoginModal();
+            }
+        });
     },
 
     showLoginModal() {
