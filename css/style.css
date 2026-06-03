@@ -295,6 +295,15 @@ h2 {
     gap: 16px;
 }
 
+.dashboard-charts .chart-container {
+    max-height: 300px;
+    overflow: hidden;
+}
+
+.dashboard-charts .chart-container canvas {
+    max-height: 250px;
+}
+
 /* ===== Cards ===== */
 .calculator-card,
 .result-card,
