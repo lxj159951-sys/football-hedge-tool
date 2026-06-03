@@ -1,10 +1,10 @@
 // ===== API Configuration =====
 
 const ApiConfig = {
-    // RapidAPI default config - 使用 free-api-live-football-data
+    // RapidAPI default config - 使用 footapi7（功能更全）
     RAPIDAPI_DEFAULTS: {
-        host: 'free-api-live-football-data.p.rapidapi.com',
-        baseUrl: 'https://free-api-live-football-data.p.rapidapi.com'
+        host: 'footapi7.p.rapidapi.com',
+        baseUrl: 'https://footapi7.p.rapidapi.com'
     },
 
     // Proxy config (解决 CORS 问题)
@@ -433,7 +433,7 @@ const ApiConfig = {
 
     // 获取实时比赛
     async getLiveMatches() {
-        return this.makeRequest('football-matches-live');
+        return this.makeRequest('matches/live');
     },
 
     // 获取比赛详情

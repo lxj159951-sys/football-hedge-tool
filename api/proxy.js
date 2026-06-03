@@ -24,8 +24,8 @@ module.exports = async (req, res) => {
     }
 
     // 构建 API URL
-    const apiHost = 'free-api-live-football-data.p.rapidapi.com';
-    const apiUrl = new URL(`https://${apiHost}/${endpoint}`);
+    const apiHost = 'footapi7.p.rapidapi.com';
+    const apiUrl = new URL(`https://${apiHost}/api/${endpoint}`);
     Object.entries(params).forEach(([key, value]) => {
         apiUrl.searchParams.append(key, value);
     });
