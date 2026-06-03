@@ -2,29 +2,41 @@
 
 const App = {
     init() {
-        // Initialize all modules
-        Arbitrage.init();
-        Hedge.init();
-        Kelly.init();
-        Prediction.init();
-        ValueBet.init();
-        Records.init();
-        Bankroll.init();
-        ApiConfig.init();
-        Matches.init();
+        // Helper function to safely initialize modules
+        const safeInit = (module, name) => {
+            try {
+                if (module && typeof module.init === 'function') {
+                    module.init();
+                    console.log(`✓ ${name} initialized`);
+                }
+            } catch (error) {
+                console.error(`✗ ${name} initialization failed:`, error);
+            }
+        };
+
+        // Initialize all modules with error handling
+        safeInit(Arbitrage, 'Arbitrage');
+        safeInit(Hedge, 'Hedge');
+        safeInit(Kelly, 'Kelly');
+        safeInit(Prediction, 'Prediction');
+        safeInit(ValueBet, 'ValueBet');
+        safeInit(Records, 'Records');
+        safeInit(Bankroll, 'Bankroll');
+        safeInit(ApiConfig, 'ApiConfig');
+        safeInit(Matches, 'Matches');
 
         // Initialize new modules
-        Auth.init();
-        HedgeConfig.init();
-        HedgeHistory.init();
-        TwoOne.init();
-        Single.init();
-        Goals.init();
-        HalfFull.init();
-        FullCover.init();
-        BkTwoOne.init();
-        BkSingle.init();
-        Scores.init();
+        safeInit(Auth, 'Auth');
+        safeInit(HedgeConfig, 'HedgeConfig');
+        safeInit(HedgeHistory, 'HedgeHistory');
+        safeInit(TwoOne, 'TwoOne');
+        safeInit(Single, 'Single');
+        safeInit(Goals, 'Goals');
+        safeInit(HalfFull, 'HalfFull');
+        safeInit(FullCover, 'FullCover');
+        safeInit(BkTwoOne, 'BkTwoOne');
+        safeInit(BkSingle, 'BkSingle');
+        safeInit(Scores, 'Scores');
 
         // Setup navigation
         this.setupNavigation();
